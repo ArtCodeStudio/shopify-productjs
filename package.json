@@ -1,0 +1,35 @@
+{
+  "name": "shopify-productjs",
+  "version": "0.0.1",
+  "description": "A Javascript library to power up product pages for Shopify themes.",
+  "main": "./dist/product.js",
+  "scripts": {
+    "templates": "node templates.js",
+    "concat": "npm run templates && ./node_modules/.bin/uglifyjs src/utilities.js src/formatters.js build/templates.js src/components/*.js src/product.js -o dist/product.js -b",
+    "minify": "npm run concat && ./node_modules/.bin/uglifyjs dist/product.js -o dist/product.min.js",
+    "watch": "./node_modules/.bin/watch 'npm run minify' src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JumpLinkNetwork/productjs.git"
+  },
+  "keywords": [
+    "shopify",
+    "product",
+    "shopify-theme",
+    "rivets",
+    "databinding",
+    "template-engine"
+  ],
+  "author": "Pascal Garber",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JumpLinkNetwork/productjs/issues"
+  },
+  "homepage": "https://github.com/JumpLinkNetwork/productjs#readme",
+  "devDependencies": {
+    "html-minifier": "^3.4.0",
+    "uglify-js": "^2.8.4",
+    "watch": "^1.0.2"
+  }
+}

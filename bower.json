@@ -1,0 +1,25 @@
+{
+  "name": "shopify-productjs",
+  "description": "A Javascript library to power up product pages for Shopify themes.",
+  "main": "./dist/product.js",
+  "authors": [
+    "Pascal Garber"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "shopify",
+    "product",
+    "shopify-theme",
+    "rivets",
+    "databinding",
+    "template-engine"
+  ],
+  "homepage": "https://github.com/JumpLinkNetwork/productjs",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
