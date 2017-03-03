@@ -144,3 +144,33 @@ rivets.formatters.handleize = function (str) {
 rivets.formatters.default = function(value, args) {
   return (typeof value !== 'undefined' && value !== null) ? value : args;
 };
+
+/**
+ * 
+ * @see https://gist.github.com/der-On/cdafe908847e2b882691
+ */
+rivets.formatters.contains = function(value, attr, search) {
+
+  console.log("contains", value, attr, search);
+
+  if(!ProductJS.Utilities.isArray(value)) {
+    console.warn("not an array");
+    return false;
+  }
+
+  if(typeof search === 'undefined') {
+    search = attr;
+    if (ProductJS.Utilities.isArray(value)) {
+      return (value.indexOf(search) !== -1);
+    }
+  }
+
+  for (var i = 0; i < value.length; i++) {
+    if(value[i][attr] === search) {
+      return true;
+      break;
+    }      
+  }
+
+  return false;
+};

@@ -1,5 +1,5 @@
 /**
- * product-variant-selectors
+ * product-quantity-button
  * @template 
  */
 
@@ -18,6 +18,9 @@ ProductJS.Components.productQuantityButtonCtr = function (element, data) {
   controller.$input = controller.$element.find('input');
   controller.decrease = Number(data.decrease);
   controller.increase = Number(data.increase);
+  controller.min = data.min;
+
+  console.log("productQuantityButtonCtr", controller);
 
   if(typeof controller.start !== 'number') {
     controller.start = window.ProductJS.settings.quantity;
@@ -35,8 +38,8 @@ ProductJS.Components.productQuantityButtonCtr = function (element, data) {
     }
 
     controller.product.variant.quantity -= controller.decrease;
-    if (controller.product.variant.quantity <= 1) {
-        controller.product.variant.quantity = 1;
+    if (controller.product.variant.quantity < controller.min) {
+        controller.product.variant.quantity = controller.min;
     }
   }
 
@@ -75,6 +78,9 @@ rivets.components['product-quantity-button'] = {
     }
     if(!data.increase) {
       console.error(new Error("increase attribute is required"));
+    }
+    if(typeof data.min !== 'number') {
+      console.error(new Error("min attribute is required"));
     }
     return new ProductJS.Components.productQuantityButtonCtr(el, data);
   }

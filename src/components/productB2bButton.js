@@ -33,21 +33,25 @@ ProductJS.Components.productB2bButtonCtr = function (element, data) {
   }
 
 
-  controller.onClick = function () {
+  controller.add = function () {
     var $button = $(this);
-    
-    
     var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
 
     if(index === -1) {
       // if product is not in b2b_cart insert a copy of it to the b2b cart
       controller.product.b2b_cart.push(controller.product.variant);
-    } else {
-      // if product is already in b2b_cart just increase the quantity
-      // controller.product.b2b_cart[index].quantity += controller.product.variant.quantity;
     }
 
-    console.log("onClick", controller.product.b2b_cart);
+    console.log("add", controller.product.b2b_cart);
+  }
+
+  controller.remove = function () {
+    var $button = $(this);
+    var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
+
+    if(index > -1) {
+      controller.product.b2b_cart.splice(index, 1);
+    }
   }
 
 }

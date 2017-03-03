@@ -2,7 +2,7 @@
     <span class="input-group-btn">
         <button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button>
     </span>
-    <input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="1" aria-label="quantity" pattern="[0-9]*">
+    <input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="0" aria-label="quantity" pattern="[0-9]*">
     <span class="input-group-btn">
         <button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button>
     </span>
