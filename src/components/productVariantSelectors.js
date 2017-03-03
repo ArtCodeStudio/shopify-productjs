@@ -15,14 +15,14 @@ ProductJS.Components.productVariantSelectorsCtr = function (element, data) {
     this.product = ProductJS.Utilities.splitOptions(data.product);
     // this.options = data.product.options;
     this.$element = $(element);
-    var self = this;
+    var controller = this;
 
     this.onOptionChange = function() {
-      console.log('onOptionChange', this, self);
-      var optionValues = ProductJS.Utilities.getOptionValues(self.$element.find('select'));
-      var variantIndex = ProductJS.Utilities.getVariant(optionValues, self.product.selectOptions, self.product.variants);
+      console.log('onOptionChange', this, controller);
+      var optionValues = ProductJS.Utilities.getOptionValues(controller.$element.find('select'));
+      var variantIndex = ProductJS.Utilities.getVariant(optionValues, controller.product.selectOptions, controller.product.variants);
       if(variantIndex > -1) {
-        self.product.currentVariant = self.product.variants[variantIndex];
+        controller.product.currentVariant = controller.product.variants[variantIndex];
       }
     }
 
@@ -41,7 +41,7 @@ rivets.components['product-variant-selectors'] = {
   // element in the template).
   initialize: function(el, data) {
     if(!data.product) {
-      console.error(new Error("function attribute is required"));
+      console.error(new Error("product attribute is required"));
     }
     return new ProductJS.Components.productVariantSelectorsCtr(el, data);
   }

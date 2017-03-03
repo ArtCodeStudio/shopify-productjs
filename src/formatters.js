@@ -91,11 +91,11 @@ rivets.formatters.array_last = function(array) {
 
 // Add Shopify-specific formatters for Rivets.js.
 rivets.formatters.money = function(value, currency) {
-  return CartJS.Utils.formatMoney(value, CartJS.settings.moneyFormat, 'money_format', currency);
+  return ProductJS.Utilities.formatMoney(value, ProductJS.settings.moneyFormat, 'money_format', currency);
 };
 
 rivets.formatters.money_with_currency = function(value, currency) {
-  return CartJS.Utils.formatMoney(value, CartJS.settings.moneyWithCurrencyFormat, 'money_with_currency_format', currency);
+  return ProductJS.Utilities.formatMoney(value, ProductJS.settings.moneyWithCurrencyFormat, 'money_with_currency_format', currency);
 };
 
 rivets.formatters.weight = function(grams) {

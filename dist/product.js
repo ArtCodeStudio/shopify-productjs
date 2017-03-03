@@ -6,6 +6,31 @@ if (typeof ProductJS.Utilities !== "object") {
     ProductJS.Utilities = {};
 }
 
+if (typeof ProductJS.cache !== "object") {
+    ProductJS.cache = {};
+}
+
+ProductJS.Utilities.formatMoney = function(value, format, formatName, currency) {
+    var _ref, _ref1;
+    if (currency == null) {
+        currency = "";
+    }
+    if (!currency) {
+        currency = ProductJS.settings.currency;
+    }
+    if (window.Currency != null && currency !== ProductJS.settings.currency) {
+        value = Currency.convert(value, ProductJS.settings.currency, currency);
+        if (((_ref = window.Currency) != null ? _ref.moneyFormats : void 0) != null && currency in window.Currency.moneyFormats) {
+            format = window.Currency.moneyFormats[currency][formatName];
+        }
+    }
+    if (((_ref1 = window.Shopify) != null ? _ref1.formatMoney : void 0) != null) {
+        return Shopify.formatMoney(value, format);
+    } else {
+        return value;
+    }
+};
+
 ProductJS.Utilities.unique = function(array) {
     var n = {}, r = [];
     for (var i = 0; i < array.length; i++) {
@@ -25,6 +50,7 @@ ProductJS.Utilities.splitOptions = function(product) {
     product.selectOptions = [];
     for (var index = 0; index < product.options.length; index++) {
         var optionTitle = product.options[index];
+        console.log("optionTitle", optionTitle);
         product.selectOptions.push({
             index: index,
             title: optionTitle,
@@ -47,6 +73,40 @@ ProductJS.Utilities.splitOptions = function(product) {
     return product;
 };
 
+ProductJS.Utilities.isArray = function(array) {
+    return $.isArray(array);
+};
+
+ProductJS.Utilities.extend = function(target, object1, object2) {
+    return $.extend(target, object1, object2);
+};
+
+ProductJS.Utilities.extendProduct = function(product, variant) {
+    product.available = variant.available;
+    product.barcode = variant.barcode;
+    product.compare_at_price = variant.compare_at_price;
+    if (variant.featured_image) {
+        product.featured_image = variant.featured_image;
+    }
+    product.id = variant.id;
+    product.inventory_management = variant.inventory_management;
+    product.inventory_policy = variant.inventory_policy;
+    product.inventory_quantity = variant.inventory_quantity;
+    product.name = variant.name;
+    product.price = variant.price;
+    product.public_title = variant.public_title;
+    product.requires_shipping = variant.requires_shipping;
+    product.sku = variant.sku;
+    product.taxable = variant.taxable;
+    product.variant_title = variant.title;
+    product.weight = variant.weight;
+    return product;
+};
+
+ProductJS.Utilities.clone = function(object) {
+    return $.extend(true, {}, object);
+};
+
 ProductJS.Utilities.getOptionValues = function($selects) {
     var optionValues = [];
     $selects.each(function(index) {
@@ -56,26 +116,45 @@ ProductJS.Utilities.getOptionValues = function($selects) {
     return optionValues;
 };
 
+ProductJS.Utilities.getQty = function($input) {
+    var qty = 1;
+    if ($input.length > 0) {
+        qty = parseInt($input.val().replace(/\D/g, ""));
+    }
+    qty = jumplink.validateQty(qty);
+    return qty;
+};
+
+ProductJS.Utilities.cacheProduct = function(product) {
+    if (ProductJS.settings.cache === true && ProductJS.cache[product.title]) {
+        console.log("product is cached");
+        return ProductJS.cache[product.title];
+    } else {
+        product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
+        ProductJS.cache[product.title] = product;
+    }
+    return product;
+};
+
 ProductJS.Utilities.getCurrentOptionValues = function(selectOptions) {
     var optionValues = [];
     for (var index = 0; index < selectOptions.length; index++) {
         optionValues.push(selectOptions[index].select);
     }
-    console.log("getCurrentOptionValues", optionValues);
     return optionValues;
 };
 
 ProductJS.Utilities.setVariant = function(product) {
-    console.log("setVariant");
     var variantIndex = ProductJS.Utilities.getVariant(null, product.selectOptions, product.variants);
     if (variantIndex > -1) {
-        product.currentVariant = product.variants[variantIndex];
+        console.log("set variant to", product.variants[variantIndex]);
+        product = ProductJS.Utilities.extendProduct(product, product.variants[variantIndex]);
     }
     return product;
+    yyyy;
 };
 
 ProductJS.Utilities.getVariant = function(optionValues, options, variants) {
-    console.log("getVariant");
     if (optionValues === null) {
         optionValues = ProductJS.Utilities.getCurrentOptionValues(options);
     }
@@ -191,11 +270,11 @@ rivets.formatters.array_last = function(array) {
 };
 
 rivets.formatters.money = function(value, currency) {
-    return CartJS.Utils.formatMoney(value, CartJS.settings.moneyFormat, "money_format", currency);
+    return ProductJS.Utilities.formatMoney(value, ProductJS.settings.moneyFormat, "money_format", currency);
 };
 
 rivets.formatters.money_with_currency = function(value, currency) {
-    return CartJS.Utils.formatMoney(value, CartJS.settings.moneyWithCurrencyFormat, "money_with_currency_format", currency);
+    return ProductJS.Utilities.formatMoney(value, ProductJS.settings.moneyWithCurrencyFormat, "money_with_currency_format", currency);
 };
 
 rivets.formatters.weight = function(grams) {
@@ -243,7 +322,15 @@ if (typeof ProductJS.templates !== "object") {
     ProductJS.templates = {};
 }
 
-ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.title } - { select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><a class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option" href="#">{ option }</a></div></div>';
+ProductJS.templates.backbone = "<h1>{product.title}</h1>";
+
+ProductJS.templates.productB2bButton = '<div class="d-flex justify-content-center w-100 pt-4"><button rv-on-click="onClick" type="button" class="btn btn-secondary">Add</button></div>';
+
+ProductJS.templates.productB2bList = '<table class="table table-hover"><thead><tr><th>Color</th><th>Size</th><th>Quantity</th></tr></thead><tbody><tr rv-each-product="product.b2b_cart"><th scope="row">1</th><td>Mark</td><td>{ product.quantity }</td></tr></tbody></table>';
+
+ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.quantity" type="text" name="quantity" class="form-control" min="1" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
+
+ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><a class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option" href="#">{ option }</a></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="10" decrease="10" increase="10"></product-quantity-button>';
 
 ProductJS.templates.productVariantSelectors = '<select rv-on-change="onOptionChange" rv-each-select="product.selectOptions" rv-class="select.title | handleize | append \' custom-select form-control\'" rv-id="select.title | handleize | append \' custom-select form-control\'"><!--<option rv-value="false">{ select.title }</option>--><option rv-each-option="select.values" rv-value="option">{ option }</option></select>';
 
@@ -255,9 +342,167 @@ if (typeof ProductJS.Components !== "object") {
     ProductJS.Components = {};
 }
 
+ProductJS.Components.backboneCtr = function(element, data) {
+    var controller = this;
+    controller.product = data.product;
+    controller.$element = $(element);
+    console.log("backboneCtr", controller);
+};
+
+rivets.components["backbone"] = {
+    template: function() {
+        return ProductJS.templates.backbone;
+    },
+    initialize: function(el, data) {
+        if (!data.product) {
+            console.error(new Error("function attribute is required"));
+        }
+        return new ProductJS.Components.backboneCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
+ProductJS.Components.productB2bButtonCtr = function(element, data) {
+    var controller = this;
+    controller.product = data.product;
+    controller.$element = $(element);
+    if (!ProductJS.Utilities.isArray(controller.product.b2b_cart)) {
+        controller.product.b2b_cart = [];
+    }
+    controller.contains = function(b2b_cart, productId) {
+        var index = -1;
+        for (var i = 0; i < b2b_cart.length; i++) {
+            if (b2b_cart[i].id === productId) {
+                return index = i;
+                break;
+            }
+        }
+        console.log("contains", index);
+        return index;
+    };
+    controller.onClick = function() {
+        var $button = $(this);
+        var index = controller.contains(controller.product.b2b_cart, controller.product.id);
+        if (index < 0) {
+            controller.product.b2b_cart.push(controller.product);
+        } else {}
+        console.log("onClick", controller.product.b2b_cart);
+    };
+};
+
+rivets.components["product-b2b-button"] = {
+    template: function() {
+        return ProductJS.templates.productB2bButton;
+    },
+    initialize: function(el, data) {
+        if (!data.product) {
+            console.error(new Error("product attribute is required"));
+        }
+        return new ProductJS.Components.productB2bButtonCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
+ProductJS.Components.productB2bListCtr = function(element, data) {
+    var controller = this;
+    this.product = data.product;
+    this.$element = $(element);
+    console.log("productB2bListCtr", controller);
+};
+
+rivets.components["product-b2b-list"] = {
+    template: function() {
+        return ProductJS.templates.productB2bList;
+    },
+    initialize: function(el, data) {
+        if (!data.product) {
+            console.error(new Error("function attribute is required"));
+        }
+        return new ProductJS.Components.productB2bListCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
+ProductJS.Components.productQuantityButtonCtr = function(element, data) {
+    var controller = this;
+    this.product = data.product;
+    this.$element = $(element);
+    this.$input = this.$element.find("input");
+    this.decrease = Number(data.decrease);
+    this.increase = Number(data.increase);
+    if (typeof this.product.quantity !== "number") {
+        this.product.quantity = Number(data.start);
+    }
+    this.onClickDecrease = function() {
+        var $button = $(this);
+        controller.product.quantity -= controller.decrease;
+        if (controller.product.quantity <= 1) {
+            controller.product.quantity = 1;
+        }
+    };
+    this.onClickIncrease = function() {
+        var $button = $(this);
+        controller.product.quantity += controller.increase;
+    };
+    this.onValueChange = function() {
+        controller.product.quantity = Number(controller.product.quantity);
+    };
+};
+
+rivets.components["product-quantity-button"] = {
+    template: function() {
+        return ProductJS.templates.productQuantityButton;
+    },
+    initialize: function(el, data) {
+        if (!data.product) {
+            console.error(new Error("product attribute is required"));
+        }
+        if (!data.start) {
+            console.error(new Error("start attribute is required"));
+        }
+        if (!data.decrease) {
+            console.error(new Error("decrease attribute is required"));
+        }
+        if (!data.increase) {
+            console.error(new Error("increase attribute is required"));
+        }
+        return new ProductJS.Components.productQuantityButtonCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
 ProductJS.Components.productVariantDropdownsCtr = function(element, data) {
-    var self = this;
-    this.product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(data.product));
+    var controller = this;
+    this.product = ProductJS.Utilities.cacheProduct(data.product);
+    this.showQuantityButton = data.showQuantityButton === true;
     if (data.dropdownButtonClass) {
         this.dropdownButtonClass = data.dropdownButtonClass;
     }
@@ -270,10 +515,9 @@ ProductJS.Components.productVariantDropdownsCtr = function(element, data) {
         var optionIndex = $dropdown.data("index");
         var title = $dropdown.data("title");
         var $button = $dropdown.find(".dropdown-toggle");
-        self.product.selectOptions[optionIndex].index = index;
-        self.product.selectOptions[optionIndex].select = self.product.selectOptions[optionIndex].values[index];
-        console.log("onOptionClick", value, title, this, self);
-        self.product = ProductJS.Utilities.setVariant(self.product);
+        controller.product.selectOptions[optionIndex].index = index;
+        controller.product.selectOptions[optionIndex].select = controller.product.selectOptions[optionIndex].values[index];
+        controller.product = ProductJS.Utilities.setVariant(controller.product);
     };
     console.log("productVariantDropdownsCtr", data);
 };
@@ -284,7 +528,7 @@ rivets.components["product-variant-dropdowns"] = {
     },
     initialize: function(el, data) {
         if (!data.product) {
-            console.error(new Error("function attribute is required"));
+            console.error(new Error("product attribute is required"));
         }
         return new ProductJS.Components.productVariantDropdownsCtr(el, data);
     }
@@ -301,13 +545,13 @@ if (typeof ProductJS.Components !== "object") {
 ProductJS.Components.productVariantSelectorsCtr = function(element, data) {
     this.product = ProductJS.Utilities.splitOptions(data.product);
     this.$element = $(element);
-    var self = this;
+    var controller = this;
     this.onOptionChange = function() {
-        console.log("onOptionChange", this, self);
-        var optionValues = ProductJS.Utilities.getOptionValues(self.$element.find("select"));
-        var variantIndex = ProductJS.Utilities.getVariant(optionValues, self.product.selectOptions, self.product.variants);
+        console.log("onOptionChange", this, controller);
+        var optionValues = ProductJS.Utilities.getOptionValues(controller.$element.find("select"));
+        var variantIndex = ProductJS.Utilities.getVariant(optionValues, controller.product.selectOptions, controller.product.variants);
         if (variantIndex > -1) {
-            self.product.currentVariant = self.product.variants[variantIndex];
+            controller.product.currentVariant = controller.product.variants[variantIndex];
         }
     };
     console.log("variantSelectorsController", data);
@@ -319,18 +563,26 @@ rivets.components["product-variant-selectors"] = {
     },
     initialize: function(el, data) {
         if (!data.product) {
-            console.error(new Error("function attribute is required"));
+            console.error(new Error("product attribute is required"));
         }
         return new ProductJS.Components.productVariantSelectorsCtr(el, data);
     }
 };
 
-if (typeof ProductJS !== "object") {
-    var ProductJS = {};
+if (typeof window.ProductJS !== "object") {
+    windows.ProductJS = {};
 }
 
-ProductJS.init = function(product) {
+if (typeof window.ProductJS.settings !== "object") {
+    window.ProductJS.settings = {
+        cache: "true"
+    };
+}
+
+window.ProductJS.init = function(product, options) {
     console.log("ProductJS.init", product);
+    ProductJS.settings = ProductJS.Utilities.extend(ProductJS.settings, options);
+    product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
     rivets.bind($("#handle-" + product.handle), {
         product: product
     });

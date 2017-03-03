@@ -6,6 +6,38 @@ if(typeof ProductJS.Utilities !== 'object') {
     ProductJS.Utilities = {};
 }
 
+if(typeof ProductJS.cache !== 'object') {
+    ProductJS.cache = {};
+}
+
+/**
+ * Format a monetary amount using Shopify's formatMoney if available.
+ * 
+ * If it's not available, just return the value.
+ * 
+ * @source: https://github.com/discolabs/cartjs/blob/master/src/utils.coffee
+ */
+ProductJS.Utilities.formatMoney = function(value, format, formatName, currency) {
+  var _ref, _ref1;
+  if (currency == null) {
+    currency = '';
+  }
+  if (!currency) {
+    currency = ProductJS.settings.currency;
+  }
+  if ((window.Currency != null) && currency !== ProductJS.settings.currency) {
+    value = Currency.convert(value, ProductJS.settings.currency, currency);
+    if ((((_ref = window.Currency) != null ? _ref.moneyFormats : void 0) != null) && (currency in window.Currency.moneyFormats)) {
+      format = window.Currency.moneyFormats[currency][formatName];
+    }
+  }
+  if (((_ref1 = window.Shopify) != null ? _ref1.formatMoney : void 0) != null) {
+    return Shopify.formatMoney(value, format);
+  } else {
+    return value;
+  }
+};
+
 /**
  * Makes array unique / remove dulicated values
  * 
@@ -38,6 +70,7 @@ ProductJS.Utilities.splitOptions = function (product) {
   product.selectOptions = [];
   for (var index = 0; index < product.options.length; index++) {
     var optionTitle = product.options[index];
+    console.log("optionTitle", optionTitle);
     product.selectOptions.push({
       index: index,
       title: optionTitle,
@@ -71,11 +104,66 @@ ProductJS.Utilities.splitOptions = function (product) {
 };
 
 /**
- * Get selected option values of selects 
+ * Check if object is array
  * 
- * @param $selects
- * @return array
+ * @param array
+ * @return boolean
  */
+ProductJS.Utilities.isArray = function (array) {
+  return $.isArray(array);
+}
+
+/**
+ * Merge the contents of two or more objects together into the first object.
+ * 
+ * @see https://api.jquery.com/jquery.extend/#jQuery-extend-target-object1-objectN
+ */
+ProductJS.Utilities.extend = function (target, object1, object2) {
+  return $.extend(target, object1, object2);
+}
+
+ProductJS.Utilities.extendProduct = function (product, variant) {
+
+  product.available = variant.available;
+  product.barcode = variant.barcode;
+  product.compare_at_price = variant.compare_at_price;
+
+  if(variant.featured_image) {
+    product.featured_image = variant.featured_image;
+  }
+
+  product.id = variant.id;
+  product.inventory_management = variant.inventory_management;
+  product.inventory_policy = variant.inventory_policy;
+  product.inventory_quantity = variant.inventory_quantity;
+  product.name = variant.name;
+  
+  // Do not overwrite options
+  // product.option1 = variant.option1;
+  // product.option2 = variant.option2;
+  // product.option3 = variant.option3;
+  // product.options = variant.options;
+
+  product.price = variant.price;
+  product.public_title = variant.public_title;
+  product.requires_shipping = variant.requires_shipping;
+  product.sku = variant.sku;
+  product.taxable = variant.taxable;
+  product.variant_title = variant.title; // do not overwrite title
+  product.weight = variant.weight;
+    
+  return product;
+}
+
+/**
+ * Clone an object without references
+ * 
+ * @see http://stackoverflow.com/a/5364657
+ */
+ProductJS.Utilities.clone = function (object) {
+  return $.extend(true, {}, object);
+}
+
 ProductJS.Utilities.getOptionValues = function ($selects) {
   var optionValues = [];
   $selects.each(function( index ) {
@@ -83,6 +171,37 @@ ProductJS.Utilities.getOptionValues = function ($selects) {
     optionValues.push(ProductJS.Utilities.getOption($select).val());
   });
   return optionValues;
+}
+
+/**
+ * Get product quantity of an html input
+ * TODO deprecated?
+ */
+ProductJS.Utilities.getQty = function ($input) {
+  var qty = 1;
+  if($input.length > 0) {
+    qty = parseInt($input.val().replace(/\D/g, ''));
+  }
+  qty = jumplink.validateQty(qty);
+  return qty;
+}
+
+/**
+ * Cache Product selected variant and quantity 
+ * 
+ * @param product
+ * @return product - cached product
+ */
+ProductJS.Utilities.cacheProduct = function (product) {
+  // if product is cached
+  if(ProductJS.settings.cache === true && ProductJS.cache[product.title]) {
+    console.log("product is cached");
+    return ProductJS.cache[product.title];
+  } else {
+    product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
+    ProductJS.cache[product.title] = product;
+  }
+  return product;
 }
 
 /**
@@ -96,17 +215,20 @@ ProductJS.Utilities.getCurrentOptionValues = function (selectOptions) {
   for (var index = 0; index < selectOptions.length; index++) {
     optionValues.push(selectOptions[index].select);
   }
-  console.log("getCurrentOptionValues", optionValues);
+  // console.log("getCurrentOptionValues", optionValues);
   return optionValues;
 }
 
 ProductJS.Utilities.setVariant = function (product) {
-  console.log("setVariant");
+  // console.log("setVariant");
   var variantIndex = ProductJS.Utilities.getVariant(null, product.selectOptions, product.variants);
   if(variantIndex > -1) {
-    product.currentVariant = product.variants[variantIndex];
+    console.log("set variant to", product.variants[variantIndex]);
+
+    // product.variant = product.variants[variantIndex]
+    product = ProductJS.Utilities.extendProduct(product, product.variants[variantIndex]);
   }
-  return product;
+  return product;yyyy
 }
 
 /**
@@ -117,7 +239,7 @@ ProductJS.Utilities.setVariant = function (product) {
  * @param variants
  */
 ProductJS.Utilities.getVariant = function (optionValues, options, variants) {
-  console.log("getVariant");
+  // console.log("getVariant");
 
   if(optionValues === null) {
     optionValues = ProductJS.Utilities.getCurrentOptionValues(options);
