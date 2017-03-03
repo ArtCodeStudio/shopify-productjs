@@ -1,16 +1,14 @@
-<table class="table table-hover">
+<table rv-hide="product.b2b_cart | empty" class="table table-hover">
   <thead>
-    <tr>
-      <th>Color</th>
-      <th>Size</th>
+    <tr class="d-flex flex-row align-items-stretch">
+      <th rv-each-select="product.selectOptions">{ select.title }</th>
       <th>Quantity</th>
     </tr>
   </thead>
-  <tbody>
-    <tr rv-each-product="product.b2b_cart">
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>{ product.quantity }</td>
+  <tbody class="d-flex flex-column-reverse">
+    <tr rv-each-variant="product.b2b_cart" class="d-flex flex-row align-items-stretch">
+      <td rv-each-option="variant.options">{ option }</td>
+      <td>{ variant.quantity }</td>
     </tr>
   </tbody>
 </table>

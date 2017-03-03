@@ -193,9 +193,14 @@ ProductJS.Utilities.getQty = function ($input) {
  * @return product - cached product
  */
 ProductJS.Utilities.cacheProduct = function (product) {
-  // if product is cached
-  if(ProductJS.settings.cache === true && ProductJS.cache[product.title]) {
-    console.log("product is cached");
+
+  if(ProductJS.settings.cache === false) {
+    return product;
+  }
+  
+  if(ProductJS.cache[product.title]) {
+    // if product is cached
+    console.log("product is cached", ProductJS.cache[product.title]);
     return ProductJS.cache[product.title];
   } else {
     product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
@@ -222,13 +227,14 @@ ProductJS.Utilities.getCurrentOptionValues = function (selectOptions) {
 ProductJS.Utilities.setVariant = function (product) {
   // console.log("setVariant");
   var variantIndex = ProductJS.Utilities.getVariant(null, product.selectOptions, product.variants);
-  if(variantIndex > -1) {
+  if(variantIndex !== -1) {
     console.log("set variant to", product.variants[variantIndex]);
 
-    // product.variant = product.variants[variantIndex]
-    product = ProductJS.Utilities.extendProduct(product, product.variants[variantIndex]);
+    product.variant = product.variants[variantIndex];
+
+    // product = ProductJS.Utilities.extendProduct(product, product.variants[variantIndex]);
   }
-  return product;yyyy
+  return product;
 }
 
 /**

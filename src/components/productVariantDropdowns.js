@@ -13,18 +13,23 @@ if(typeof ProductJS.Components !== 'object') {
 
 ProductJS.Components.productVariantDropdownsCtr = function (element, data) {
   var controller = this;
-  this.product = ProductJS.Utilities.cacheProduct(data.product);
-  this.showQuantityButton = (data.showQuantityButton === true)
+  controller.product = data.product;
+  controller.showQuantityButton = (data.showQuantityButton === true)
+
+  controller.start = data.startQuantity;
+  if(typeof controller.start !== 'number') {
+    controller.start = window.ProductJS.settings.quantity;
+  }
 
   if(data.dropdownButtonClass) {
-      this.dropdownButtonClass = data.dropdownButtonClass;
+      controller.dropdownButtonClass = data.dropdownButtonClass;
   }
   
-  // this.options = data.product.options;
-  this.$element = $(element);
+  // controller.options = data.product.options;
+  controller.$element = $(element);
   
 
-  this.onOptionClick = function() {
+  controller.onOptionClick = function() {
     var $item = $(this);
     var value = $item.data('value');
     var index = $item.data('index');
@@ -40,6 +45,10 @@ ProductJS.Components.productVariantDropdownsCtr = function (element, data) {
 
     // console.log('onOptionClick', value, title, this, controller);
     controller.product = ProductJS.Utilities.setVariant(controller.product);
+
+    if(typeof controller.product.variant.quantity !== 'number') {
+      controller.product.variant.quantity = Number(controller.start);
+    }
 
   }
 

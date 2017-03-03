@@ -126,8 +126,11 @@ ProductJS.Utilities.getQty = function($input) {
 };
 
 ProductJS.Utilities.cacheProduct = function(product) {
-    if (ProductJS.settings.cache === true && ProductJS.cache[product.title]) {
-        console.log("product is cached");
+    if (ProductJS.settings.cache === false) {
+        return product;
+    }
+    if (ProductJS.cache[product.title]) {
+        console.log("product is cached", ProductJS.cache[product.title]);
         return ProductJS.cache[product.title];
     } else {
         product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
@@ -146,12 +149,11 @@ ProductJS.Utilities.getCurrentOptionValues = function(selectOptions) {
 
 ProductJS.Utilities.setVariant = function(product) {
     var variantIndex = ProductJS.Utilities.getVariant(null, product.selectOptions, product.variants);
-    if (variantIndex > -1) {
+    if (variantIndex !== -1) {
         console.log("set variant to", product.variants[variantIndex]);
-        product = ProductJS.Utilities.extendProduct(product, product.variants[variantIndex]);
+        product.variant = product.variants[variantIndex];
     }
     return product;
-    yyyy;
 };
 
 ProductJS.Utilities.getVariant = function(optionValues, options, variants) {
@@ -314,6 +316,10 @@ rivets.formatters.handleize = function(str) {
     return str.replace(/ /g, "-");
 };
 
+rivets.formatters.default = function(value, args) {
+    return typeof value !== "undefined" && value !== null ? value : args;
+};
+
 if (typeof ProductJS !== "object") {
     var ProductJS = {};
 }
@@ -326,11 +332,11 @@ ProductJS.templates.backbone = "<h1>{product.title}</h1>";
 
 ProductJS.templates.productB2bButton = '<div class="d-flex justify-content-center w-100 pt-4"><button rv-on-click="onClick" type="button" class="btn btn-secondary">Add</button></div>';
 
-ProductJS.templates.productB2bList = '<table class="table table-hover"><thead><tr><th>Color</th><th>Size</th><th>Quantity</th></tr></thead><tbody><tr rv-each-product="product.b2b_cart"><th scope="row">1</th><td>Mark</td><td>{ product.quantity }</td></tr></tbody></table>';
+ProductJS.templates.productB2bList = '<table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options">{ option }</td><td>{ variant.quantity }</td></tr></tbody></table>';
 
-ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.quantity" type="text" name="quantity" class="form-control" min="1" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
+ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="1" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
 
-ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><a class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option" href="#">{ option }</a></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="10" decrease="10" increase="10"></product-quantity-button>';
+ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><a class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option" href="#">{ option }</a></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="start" decrease="10" increase="10"></product-quantity-button>';
 
 ProductJS.templates.productVariantSelectors = '<select rv-on-change="onOptionChange" rv-each-select="product.selectOptions" rv-class="select.title | handleize | append \' custom-select form-control\'" rv-id="select.title | handleize | append \' custom-select form-control\'"><!--<option rv-value="false">{ select.title }</option>--><option rv-each-option="select.values" rv-value="option">{ option }</option></select>';
 
@@ -389,9 +395,9 @@ ProductJS.Components.productB2bButtonCtr = function(element, data) {
     };
     controller.onClick = function() {
         var $button = $(this);
-        var index = controller.contains(controller.product.b2b_cart, controller.product.id);
-        if (index < 0) {
-            controller.product.b2b_cart.push(controller.product);
+        var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
+        if (index === -1) {
+            controller.product.b2b_cart.push(controller.product.variant);
         } else {}
         console.log("onClick", controller.product.b2b_cart);
     };
@@ -446,27 +452,36 @@ if (typeof ProductJS.Components !== "object") {
 
 ProductJS.Components.productQuantityButtonCtr = function(element, data) {
     var controller = this;
-    this.product = data.product;
-    this.$element = $(element);
-    this.$input = this.$element.find("input");
-    this.decrease = Number(data.decrease);
-    this.increase = Number(data.increase);
-    if (typeof this.product.quantity !== "number") {
-        this.product.quantity = Number(data.start);
+    controller.product = data.product;
+    controller.$element = $(element);
+    controller.$input = controller.$element.find("input");
+    controller.decrease = Number(data.decrease);
+    controller.increase = Number(data.increase);
+    if (typeof controller.start !== "number") {
+        controller.start = window.ProductJS.settings.quantity;
     }
-    this.onClickDecrease = function() {
+    if (typeof controller.product.variant.quantity !== "number") {
+        controller.product.variant.quantity = Number(controller.start);
+    }
+    controller.onClickDecrease = function() {
         var $button = $(this);
-        controller.product.quantity -= controller.decrease;
-        if (controller.product.quantity <= 1) {
-            controller.product.quantity = 1;
+        if (typeof controller.product.variant.quantity !== "number") {
+            controller.product.variant.quantity = Number(controller.start);
+        }
+        controller.product.variant.quantity -= controller.decrease;
+        if (controller.product.variant.quantity <= 1) {
+            controller.product.variant.quantity = 1;
         }
     };
-    this.onClickIncrease = function() {
+    controller.onClickIncrease = function() {
         var $button = $(this);
-        controller.product.quantity += controller.increase;
+        if (typeof controller.product.variant.quantity !== "number") {
+            controller.product.variant.quantity = Number(controller.start);
+        }
+        controller.product.variant.quantity += controller.increase;
     };
-    this.onValueChange = function() {
-        controller.product.quantity = Number(controller.product.quantity);
+    controller.onValueChange = function() {
+        controller.product.variant.quantity = Number(controller.product.variant.quantity);
     };
 };
 
@@ -477,9 +492,6 @@ rivets.components["product-quantity-button"] = {
     initialize: function(el, data) {
         if (!data.product) {
             console.error(new Error("product attribute is required"));
-        }
-        if (!data.start) {
-            console.error(new Error("start attribute is required"));
         }
         if (!data.decrease) {
             console.error(new Error("decrease attribute is required"));
@@ -501,13 +513,17 @@ if (typeof ProductJS.Components !== "object") {
 
 ProductJS.Components.productVariantDropdownsCtr = function(element, data) {
     var controller = this;
-    this.product = ProductJS.Utilities.cacheProduct(data.product);
-    this.showQuantityButton = data.showQuantityButton === true;
-    if (data.dropdownButtonClass) {
-        this.dropdownButtonClass = data.dropdownButtonClass;
+    controller.product = data.product;
+    controller.showQuantityButton = data.showQuantityButton === true;
+    controller.start = data.startQuantity;
+    if (typeof controller.start !== "number") {
+        controller.start = window.ProductJS.settings.quantity;
     }
-    this.$element = $(element);
-    this.onOptionClick = function() {
+    if (data.dropdownButtonClass) {
+        controller.dropdownButtonClass = data.dropdownButtonClass;
+    }
+    controller.$element = $(element);
+    controller.onOptionClick = function() {
         var $item = $(this);
         var value = $item.data("value");
         var index = $item.data("index");
@@ -518,6 +534,9 @@ ProductJS.Components.productVariantDropdownsCtr = function(element, data) {
         controller.product.selectOptions[optionIndex].index = index;
         controller.product.selectOptions[optionIndex].select = controller.product.selectOptions[optionIndex].values[index];
         controller.product = ProductJS.Utilities.setVariant(controller.product);
+        if (typeof controller.product.variant.quantity !== "number") {
+            controller.product.variant.quantity = Number(controller.start);
+        }
     };
     console.log("productVariantDropdownsCtr", data);
 };
@@ -551,7 +570,7 @@ ProductJS.Components.productVariantSelectorsCtr = function(element, data) {
         var optionValues = ProductJS.Utilities.getOptionValues(controller.$element.find("select"));
         var variantIndex = ProductJS.Utilities.getVariant(optionValues, controller.product.selectOptions, controller.product.variants);
         if (variantIndex > -1) {
-            controller.product.currentVariant = controller.product.variants[variantIndex];
+            controller.product.variant = controller.product.variants[variantIndex];
         }
     };
     console.log("variantSelectorsController", data);
@@ -575,14 +594,15 @@ if (typeof window.ProductJS !== "object") {
 
 if (typeof window.ProductJS.settings !== "object") {
     window.ProductJS.settings = {
-        cache: "true"
+        cache: "true",
+        quantity: 1
     };
 }
 
 window.ProductJS.init = function(product, options) {
     console.log("ProductJS.init", product);
     ProductJS.settings = ProductJS.Utilities.extend(ProductJS.settings, options);
-    product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
+    product = ProductJS.Utilities.cacheProduct(product);
     rivets.bind($("#handle-" + product.handle), {
         product: product
     });

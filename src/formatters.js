@@ -136,3 +136,11 @@ rivets.formatters.handleize = function (str) {
   str = jumplink.filter.downcase(str);
   return str.replace(/ /g,"-");
 }
+
+/**
+ * Set default value
+ * @see https://gist.github.com/der-On/cdafe908847e2b882691
+ */
+rivets.formatters.default = function(value, args) {
+  return (typeof value !== 'undefined' && value !== null) ? value : args;
+};

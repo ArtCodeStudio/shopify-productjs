@@ -22,7 +22,7 @@ ProductJS.Components.productVariantSelectorsCtr = function (element, data) {
       var optionValues = ProductJS.Utilities.getOptionValues(controller.$element.find('select'));
       var variantIndex = ProductJS.Utilities.getVariant(optionValues, controller.product.selectOptions, controller.product.variants);
       if(variantIndex > -1) {
-        controller.product.currentVariant = controller.product.variants[variantIndex];
+        controller.product.variant = controller.product.variants[variantIndex];
       }
     }
 

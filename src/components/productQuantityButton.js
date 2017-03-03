@@ -13,31 +13,46 @@ if(typeof ProductJS.Components !== 'object') {
 
 ProductJS.Components.productQuantityButtonCtr = function (element, data) {
   var controller = this;
-  this.product = data.product;
-  this.$element = $(element);
-  this.$input = this.$element.find('input');
-  this.decrease = Number(data.decrease);
-  this.increase = Number(data.increase);
-  if(typeof this.product.quantity !== 'number') {
-    this.product.quantity = Number(data.start);
+  controller.product = data.product;
+  controller.$element = $(element);
+  controller.$input = controller.$element.find('input');
+  controller.decrease = Number(data.decrease);
+  controller.increase = Number(data.increase);
+
+  if(typeof controller.start !== 'number') {
+    controller.start = window.ProductJS.settings.quantity;
   }
 
-  this.onClickDecrease = function () {
+  if(typeof controller.product.variant.quantity !== 'number') {
+    controller.product.variant.quantity = Number(controller.start);
+  }
+
+  controller.onClickDecrease = function () {
     var $button = $(this);
-    controller.product.quantity -= controller.decrease;
-    if (controller.product.quantity <= 1) {
-        controller.product.quantity = 1;
+
+    if(typeof controller.product.variant.quantity !== 'number') {
+      controller.product.variant.quantity = Number(controller.start);
+    }
+
+    controller.product.variant.quantity -= controller.decrease;
+    if (controller.product.variant.quantity <= 1) {
+        controller.product.variant.quantity = 1;
     }
   }
 
-  this.onClickIncrease = function () {
+  controller.onClickIncrease = function () {
     var $button = $(this);
-    controller.product.quantity += controller.increase;
+
+    if(typeof controller.product.variant.quantity !== 'number') {
+      controller.product.variant.quantity = Number(controller.start);
+    }
+
+    controller.product.variant.quantity += controller.increase;
   }
 
   // Make sure value is always a Number
-  this.onValueChange = function () {
-    controller.product.quantity = Number(controller.product.quantity);
+  controller.onValueChange = function () {
+    controller.product.variant.quantity = Number(controller.product.variant.quantity);
   }
 
 }
@@ -54,9 +69,6 @@ rivets.components['product-quantity-button'] = {
   initialize: function(el, data) {
     if(!data.product) {
       console.error(new Error("product attribute is required"));
-    }
-    if(!data.start) {
-      console.error(new Error("start attribute is required"));
     }
     if(!data.decrease) {
       console.error(new Error("decrease attribute is required"));

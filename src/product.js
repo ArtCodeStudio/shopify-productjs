@@ -5,7 +5,8 @@ if(typeof window.ProductJS !== 'object') {
 if(typeof window.ProductJS.settings !== 'object') {
   // default settings
   window.ProductJS.settings = {
-    cache: "true"
+    cache: "true",
+    quantity: 1
   };
 }
 
@@ -19,6 +20,6 @@ if(typeof window.ProductJS.settings !== 'object') {
 window.ProductJS.init = function (product, options) {
   console.log('ProductJS.init', product);
   ProductJS.settings = ProductJS.Utilities.extend(ProductJS.settings, options);
-  product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
+  product = ProductJS.Utilities.cacheProduct(product);
   rivets.bind($('#handle-'+product.handle), {product: product});
 }

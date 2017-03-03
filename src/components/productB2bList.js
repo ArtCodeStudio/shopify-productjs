@@ -21,14 +21,11 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
 }
 
 rivets.components['product-b2b-list'] = {
-  // Return the template for the component.
+
   template: function() {
     return ProductJS.templates.productB2bList;
   },
 
-  // Takes the original element and the data that was passed into the
-  // component (either from rivets.init or the attributes on the component
-  // element in the template).
   initialize: function(el, data) {
     if(!data.product) {
       console.error(new Error("function attribute is required"));
