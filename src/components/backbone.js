@@ -17,6 +17,11 @@ ProductJS.Components.backboneCtr = function (element, data) {
   controller.product = data.product;
   controller.$element = $(element);
 
+  controller.onClick = function () {
+    var $button = $(this);
+    console.log("onClick", $button);
+  }
+
   console.log("backboneCtr", controller);
 }
 

@@ -122,39 +122,6 @@ ProductJS.Utilities.extend = function (target, object1, object2) {
   return $.extend(target, object1, object2);
 }
 
-ProductJS.Utilities.extendProduct = function (product, variant) {
-
-  product.available = variant.available;
-  product.barcode = variant.barcode;
-  product.compare_at_price = variant.compare_at_price;
-
-  if(variant.featured_image) {
-    product.featured_image = variant.featured_image;
-  }
-
-  product.id = variant.id;
-  product.inventory_management = variant.inventory_management;
-  product.inventory_policy = variant.inventory_policy;
-  product.inventory_quantity = variant.inventory_quantity;
-  product.name = variant.name;
-  
-  // Do not overwrite options
-  // product.option1 = variant.option1;
-  // product.option2 = variant.option2;
-  // product.option3 = variant.option3;
-  // product.options = variant.options;
-
-  product.price = variant.price;
-  product.public_title = variant.public_title;
-  product.requires_shipping = variant.requires_shipping;
-  product.sku = variant.sku;
-  product.taxable = variant.taxable;
-  product.variant_title = variant.title; // do not overwrite title
-  product.weight = variant.weight;
-    
-  return product;
-}
-
 /**
  * Clone an object without references
  * 
@@ -164,6 +131,10 @@ ProductJS.Utilities.clone = function (object) {
   return $.extend(true, {}, object);
 }
 
+/**
+ * Set product.optionValues needed for selects and dropdowns to choose the product variant 
+ * 
+ */
 ProductJS.Utilities.getOptionValues = function ($selects) {
   var optionValues = [];
   $selects.each(function( index ) {
@@ -171,19 +142,6 @@ ProductJS.Utilities.getOptionValues = function ($selects) {
     optionValues.push(ProductJS.Utilities.getOption($select).val());
   });
   return optionValues;
-}
-
-/**
- * Get product quantity of an html input
- * TODO deprecated?
- */
-ProductJS.Utilities.getQty = function ($input) {
-  var qty = 1;
-  if($input.length > 0) {
-    qty = parseInt($input.val().replace(/\D/g, ''));
-  }
-  qty = jumplink.validateQty(qty);
-  return qty;
 }
 
 /**
@@ -222,6 +180,23 @@ ProductJS.Utilities.getCurrentOptionValues = function (selectOptions) {
   }
   // console.log("getCurrentOptionValues", optionValues);
   return optionValues;
+}
+
+/**
+ * Get current option index of selectOption by value
+ * 
+ * @param selectOption
+ * @return array
+ */
+ProductJS.Utilities.getCurrentOptionIndex = function (selectOption, value) {
+  var resultIndex = -1;
+  for (var index = 0; index < selectOption.values.length; index++) {
+    if(selectOption.values[index] === value) {
+      resultIndex = index;
+      break;
+    }
+  }
+  return resultIndex;
 }
 
 ProductJS.Utilities.setVariant = function (product) {

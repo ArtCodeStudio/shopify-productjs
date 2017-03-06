@@ -81,28 +81,6 @@ ProductJS.Utilities.extend = function(target, object1, object2) {
     return $.extend(target, object1, object2);
 };
 
-ProductJS.Utilities.extendProduct = function(product, variant) {
-    product.available = variant.available;
-    product.barcode = variant.barcode;
-    product.compare_at_price = variant.compare_at_price;
-    if (variant.featured_image) {
-        product.featured_image = variant.featured_image;
-    }
-    product.id = variant.id;
-    product.inventory_management = variant.inventory_management;
-    product.inventory_policy = variant.inventory_policy;
-    product.inventory_quantity = variant.inventory_quantity;
-    product.name = variant.name;
-    product.price = variant.price;
-    product.public_title = variant.public_title;
-    product.requires_shipping = variant.requires_shipping;
-    product.sku = variant.sku;
-    product.taxable = variant.taxable;
-    product.variant_title = variant.title;
-    product.weight = variant.weight;
-    return product;
-};
-
 ProductJS.Utilities.clone = function(object) {
     return $.extend(true, {}, object);
 };
@@ -114,15 +92,6 @@ ProductJS.Utilities.getOptionValues = function($selects) {
         optionValues.push(ProductJS.Utilities.getOption($select).val());
     });
     return optionValues;
-};
-
-ProductJS.Utilities.getQty = function($input) {
-    var qty = 1;
-    if ($input.length > 0) {
-        qty = parseInt($input.val().replace(/\D/g, ""));
-    }
-    qty = jumplink.validateQty(qty);
-    return qty;
 };
 
 ProductJS.Utilities.cacheProduct = function(product) {
@@ -145,6 +114,17 @@ ProductJS.Utilities.getCurrentOptionValues = function(selectOptions) {
         optionValues.push(selectOptions[index].select);
     }
     return optionValues;
+};
+
+ProductJS.Utilities.getCurrentOptionIndex = function(selectOption, value) {
+    var resultIndex = -1;
+    for (var index = 0; index < selectOption.values.length; index++) {
+        if (selectOption.values[index] === value) {
+            resultIndex = index;
+            break;
+        }
+    }
+    return resultIndex;
 };
 
 ProductJS.Utilities.setVariant = function(product) {
@@ -349,11 +329,11 @@ if (typeof ProductJS.templates !== "object") {
     ProductJS.templates = {};
 }
 
-ProductJS.templates.backbone = "<h1>{product.title}</h1>";
+ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
 
 ProductJS.templates.productB2bButton = '<div class="d-flex justify-content-center w-100 pt-4"><button rv-hide="product.b2b_cart | contains \'id\' product.variant.id" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="product.b2b_cart | contains \'id\' product.variant.id" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
 
-ProductJS.templates.productB2bList = '<table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options">{ option }</td><td>{ variant.quantity }</td></tr></tbody></table>';
+ProductJS.templates.productB2bList = '<table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option">{ option }</td><td data-type="quantity">{ variant.quantity }</td></tr></tbody></table>';
 
 ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="0" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
 
@@ -373,6 +353,10 @@ ProductJS.Components.backboneCtr = function(element, data) {
     var controller = this;
     controller.product = data.product;
     controller.$element = $(element);
+    controller.onClick = function() {
+        var $button = $(this);
+        console.log("onClick", $button);
+    };
     console.log("backboneCtr", controller);
 };
 
@@ -453,8 +437,39 @@ if (typeof ProductJS.Components !== "object") {
 
 ProductJS.Components.productB2bListCtr = function(element, data) {
     var controller = this;
-    this.product = data.product;
-    this.$element = $(element);
+    controller.product = data.product;
+    controller.$element = $(element);
+    controller.onClickRow = function() {
+        var $tableRow = $(this);
+        var $cols = $tableRow.children();
+        $cols.each(function(i) {
+            var $col = $(this);
+            var value = String($col.data("value"));
+            var index = Number($col.data("index"));
+            var type = String($col.data("type"));
+            switch (type) {
+              case "option":
+                var selectOption = controller.product.selectOptions[index];
+                var openIndex = ProductJS.Utilities.getCurrentOptionIndex(selectOption, value);
+                if (openIndex > -1) {
+                    selectOption.select = value;
+                    selectOption.select.index = openIndex;
+                    controller.product = ProductJS.Utilities.setVariant(controller.product);
+                } else {
+                    console.error("Open value not found", "value", value, "index", index, "product", controller.product);
+                }
+                break;
+
+              case "quantity":
+                break;
+
+              default:
+                console.warn("Unknown column type", type);
+                break;
+            }
+            console.log(type, index, value);
+        });
+    };
     console.log("productB2bListCtr", controller);
 };
 
