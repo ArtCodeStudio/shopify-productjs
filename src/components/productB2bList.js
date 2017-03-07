@@ -17,6 +17,27 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
   controller.product = data.product;
   controller.$element = $(element);
 
+  /**
+   * Get cart and merge it with product and b2b cart
+   */
+  ProductJS.Utilities.mergeCart(controller.product, {
+    handle: function (product, index) {
+      product = ProductJS.B2bCart.add(product, product.variants[index]);
+    }
+  }, function (error, product) {
+    if(error) {
+        return error;
+    }
+
+    if(typeof product === 'object') {
+        controller.product = product;
+    }
+    
+  });
+
+  /**
+   * Select variant from table row
+   */
   controller.onClickRow = function () {
     var $tableRow = $(this);
     var $cols = $tableRow.children();
@@ -39,21 +60,17 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
                 }
                 break;
             case 'quantity':
-                
                 break;
             default:
                 console.warn("Unknown column type", type);
                 break;
         }
-
-        console.log(type, index, value);
     });
 
 
-    
   }
 
-  console.log("productB2bListCtr", controller);
+  // console.log("productB2bListCtr", controller);
 }
 
 rivets.components['product-b2b-list'] = {

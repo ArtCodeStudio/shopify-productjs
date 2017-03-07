@@ -20,38 +20,17 @@ ProductJS.Components.productB2bButtonCtr = function (element, data) {
       controller.product.b2b_cart = [];
   }
 
-  controller.contains = function (b2b_cart, productId) {
-    var index = -1;
-    for (var i = 0; i < b2b_cart.length; i++) {
-      if(b2b_cart[i].id === productId) {
-        return index = i;
-        break;
-      }      
-    }
-    console.log("contains", index);
-    return index;
-  }
-
-
   controller.add = function () {
-    var $button = $(this);
-    var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
-
-    if(index === -1) {
-      // if product is not in b2b_cart insert a copy of it to the b2b cart
-      controller.product.b2b_cart.push(controller.product.variant);
-    }
-
-    console.log("add", controller.product.b2b_cart);
+    ProductJS.B2bCart.add(controller.product, controller.product.variant, {
+      removeEmpty: false,
+      sumQuantity: false,
+    });
   }
 
   controller.remove = function () {
     var $button = $(this);
-    var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
-
-    if(index > -1) {
-      controller.product.b2b_cart.splice(index, 1);
-    }
+    var index = ProductJS.B2bCart.getItem(controller.product.b2b_cart, controller.product.variant.id);
+    controller.product = ProductJS.B2bCart.remove(controller.product, controller.product.variant, { resetQuantity: true })
   }
 
 }

@@ -77,6 +77,10 @@ ProductJS.Utilities.isArray = function(array) {
     return $.isArray(array);
 };
 
+ProductJS.Utilities.isFunction = function(obj) {
+    return typeof obj === "function";
+};
+
 ProductJS.Utilities.extend = function(target, object1, object2) {
     return $.extend(target, object1, object2);
 };
@@ -136,6 +140,48 @@ ProductJS.Utilities.setVariant = function(product) {
     return product;
 };
 
+ProductJS.Utilities.findVariant = function(product, id) {
+    var index = -1;
+    for (var i = 0; i < product.variants.length; i++) {
+        var variant = product.variants[i];
+        if (variant.id === id) {
+            index = i;
+            break;
+        }
+    }
+    return index;
+};
+
+ProductJS.Utilities.mergeCart = function(product, options, cb) {
+    $.getJSON("/cart.js", function(cart) {}).done(function(cart) {
+        console.log("second success", cart);
+        product.variantInCart = false;
+        for (var i = 0; i < product.variants.length; i++) {
+            var variant = product.variants[i];
+            variant.inCart = false;
+        }
+        for (var i = 0; i < cart.items.length; i++) {
+            var item = cart.items[i];
+            var index = ProductJS.Utilities.findVariant(product, item.variant_id);
+            if (index > -1) {
+                product.variants[index].quantity = item.quantity;
+                product.variants[index].inCart = true;
+                product.variantInCart = true;
+                if (typeof options === "object" && ProductJS.Utilities.isFunction(options.handle)) {
+                    options.handle(product, index);
+                }
+            } else {
+                console.warn("Variant id " + item.variant_id + " not found!", product);
+            }
+        }
+        console.log("mergeCart", product);
+        return cb(null, product);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.error(jqXHR.responseJSON.description, jqXHR.responseJSON.message);
+        return cb(jqXHR.responseJSON, product);
+    }).always(function() {});
+};
+
 ProductJS.Utilities.getVariant = function(optionValues, options, variants) {
     if (optionValues === null) {
         optionValues = ProductJS.Utilities.getCurrentOptionValues(options);
@@ -163,6 +209,102 @@ ProductJS.Utilities.getVariant = function(optionValues, options, variants) {
 
 ProductJS.Utilities.getOption = function($select) {
     return $select.find("option:selected");
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.B2bCart !== "object") {
+    ProductJS.B2bCart = {};
+}
+
+ProductJS.B2bCart.getItem = function(b2b_cart, id) {
+    var index = -1;
+    for (var i = 0; i < b2b_cart.length; i++) {
+        var item = b2b_cart[i];
+        if (item.id === id) {
+            index = i;
+            break;
+        }
+    }
+    return index;
+};
+
+ProductJS.B2bCart.add = function(product, variant, options) {
+    if (!ProductJS.Utilities.isArray(product.b2b_cart)) {
+        product.b2b_cart = [];
+    }
+    if (!options) {
+        options = {
+            removeEmpty: false,
+            sumQuantity: false
+        };
+    }
+    var index = ProductJS.B2bCart.getItem(product.b2b_cart, variant.id);
+    if (variant.quantity > 0) {
+        if (index > -1) {
+            if (options && options.sumQuantity) {
+                product.b2b_cart[index].quantity += variant.quantity;
+            } else {
+                product.b2b_cart[index] = variant;
+            }
+        } else {
+            product.b2b_cart.push(variant);
+        }
+    } else {
+        if (options && options.removeEmpty) {
+            if (index > -1) {
+                product.b2b_cart.splice(index, 1);
+            }
+        }
+    }
+    return product;
+};
+
+ProductJS.B2bCart.remove = function(product, variant, options) {
+    if (!ProductJS.Utilities.isArray(product.b2b_cart)) {
+        product.b2b_cart = [];
+    }
+    var index = ProductJS.B2bCart.getItem(product.b2b_cart, variant.id);
+    if (options && options.resetQuantity) {
+        variant.quantity = 0;
+    }
+    if (index > -1) {
+        product.b2b_cart.splice(index, 1);
+    }
+    return product;
+};
+
+ProductJS.B2bCart.updateCart = function(product) {
+    var adds = [];
+    var updates = {};
+    for (var i = 0; i < product.b2b_cart.length; i++) {
+        var variant = product.b2b_cart[i];
+        if (typeof variant.quantity !== "number") {
+            variant.quantity = 0;
+        }
+        if (variant.inCart) {
+            updates[variant.id] = variant.quantity;
+        } else {
+            adds.push(variant);
+        }
+        for (var a = 0; a < adds.length; a++) {
+            var variant = adds[a];
+            CartJS.addItem(variant.id, variant.quantity, {}, {
+                success: function(data, textStatus, jqXHR) {
+                    console.log(data, CartJS.cart);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error(jqXHR, textStatus, errorThrown);
+                    console.error(jqXHR.responseJSON.message);
+                    console.error(jqXHR.responseJSON.description);
+                    console.error(jqXHR.responseJSON.status);
+                }
+            });
+        }
+        CartJS.updateItemQuantitiesById(updates);
+    }
 };
 
 rivets.formatters.eq = function(a, b) {
@@ -331,6 +473,8 @@ if (typeof ProductJS.templates !== "object") {
 
 ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
 
+ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100">{ label }</button></div>';
+
 ProductJS.templates.productB2bButton = '<div class="d-flex justify-content-center w-100 pt-4"><button rv-hide="product.b2b_cart | contains \'id\' product.variant.id" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="product.b2b_cart | contains \'id\' product.variant.id" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
 
 ProductJS.templates.productB2bList = '<table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option">{ option }</td><td data-type="quantity">{ variant.quantity }</td></tr></tbody></table>';
@@ -365,10 +509,63 @@ rivets.components["backbone"] = {
         return ProductJS.templates.backbone;
     },
     initialize: function(el, data) {
+        console.log("init backbone", el, data);
         if (!data.product) {
             console.error(new Error("function attribute is required"));
         }
         return new ProductJS.Components.backboneCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
+ProductJS.Components.productB2bAddCtr = function(element, data) {
+    var controller = this;
+    controller.product = data.product;
+    controller.$element = $(element);
+    controller.label = data.label;
+    console.log("CartJS.cart", CartJS.cart);
+    controller.addListToCart = function() {
+        var $button = $(this);
+        console.log("onClick", $button);
+        for (var i = 0; i < controller.product.b2b_cart.length; i++) {
+            var variant = controller.product.b2b_cart[i];
+            console.log(variant.id, variant.quantity);
+            var properties = {};
+            if (typeof variant.quantity === "number" && variant.quantity > 0) {
+                CartJS.addItem(variant.id, variant.quantity, properties, {
+                    success: function(data, textStatus, jqXHR) {
+                        console.log(data, CartJS.cart);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error(jqXHR, textStatus, errorThrown);
+                        console.error(jqXHR.responseJSON.message);
+                        console.error(jqXHR.responseJSON.description);
+                        console.error(jqXHR.responseJSON.status);
+                    }
+                });
+            }
+        }
+    };
+    console.log("productB2bAddCtr", controller);
+};
+
+rivets.components["product-b2b-add"] = {
+    template: function() {
+        return ProductJS.templates.productB2bAdd;
+    },
+    initialize: function(el, data) {
+        console.log("init productB2bAddCtr", el, data);
+        if (!data.product) {
+            console.error(new Error("function attribute is required"));
+        }
+        return new ProductJS.Components.productB2bAddCtr(el, data);
     }
 };
 
@@ -387,31 +584,18 @@ ProductJS.Components.productB2bButtonCtr = function(element, data) {
     if (!ProductJS.Utilities.isArray(controller.product.b2b_cart)) {
         controller.product.b2b_cart = [];
     }
-    controller.contains = function(b2b_cart, productId) {
-        var index = -1;
-        for (var i = 0; i < b2b_cart.length; i++) {
-            if (b2b_cart[i].id === productId) {
-                return index = i;
-                break;
-            }
-        }
-        console.log("contains", index);
-        return index;
-    };
     controller.add = function() {
-        var $button = $(this);
-        var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
-        if (index === -1) {
-            controller.product.b2b_cart.push(controller.product.variant);
-        }
-        console.log("add", controller.product.b2b_cart);
+        ProductJS.B2bCart.add(controller.product, controller.product.variant, {
+            removeEmpty: false,
+            sumQuantity: false
+        });
     };
     controller.remove = function() {
         var $button = $(this);
-        var index = controller.contains(controller.product.b2b_cart, controller.product.variant.id);
-        if (index > -1) {
-            controller.product.b2b_cart.splice(index, 1);
-        }
+        var index = ProductJS.B2bCart.getItem(controller.product.b2b_cart, controller.product.variant.id);
+        controller.product = ProductJS.B2bCart.remove(controller.product, controller.product.variant, {
+            resetQuantity: true
+        });
     };
 };
 
@@ -439,6 +623,18 @@ ProductJS.Components.productB2bListCtr = function(element, data) {
     var controller = this;
     controller.product = data.product;
     controller.$element = $(element);
+    ProductJS.Utilities.mergeCart(controller.product, {
+        handle: function(product, index) {
+            product = ProductJS.B2bCart.add(product, product.variants[index]);
+        }
+    }, function(error, product) {
+        if (error) {
+            return error;
+        }
+        if (typeof product === "object") {
+            controller.product = product;
+        }
+    });
     controller.onClickRow = function() {
         var $tableRow = $(this);
         var $cols = $tableRow.children();
@@ -467,10 +663,8 @@ ProductJS.Components.productB2bListCtr = function(element, data) {
                 console.warn("Unknown column type", type);
                 break;
             }
-            console.log(type, index, value);
         });
     };
-    console.log("productB2bListCtr", controller);
 };
 
 rivets.components["product-b2b-list"] = {
@@ -501,7 +695,6 @@ ProductJS.Components.productQuantityButtonCtr = function(element, data) {
     controller.decrease = Number(data.decrease);
     controller.increase = Number(data.increase);
     controller.min = data.min;
-    console.log("productQuantityButtonCtr", controller);
     if (typeof controller.start !== "number") {
         controller.start = window.ProductJS.settings.quantity;
     }
@@ -586,7 +779,6 @@ ProductJS.Components.productVariantDropdownsCtr = function(element, data) {
             controller.product.variant.quantity = Number(controller.start);
         }
     };
-    console.log("productVariantDropdownsCtr", data);
 };
 
 rivets.components["product-variant-dropdowns"] = {
@@ -614,14 +806,12 @@ ProductJS.Components.productVariantSelectorsCtr = function(element, data) {
     this.$element = $(element);
     var controller = this;
     this.onOptionChange = function() {
-        console.log("onOptionChange", this, controller);
         var optionValues = ProductJS.Utilities.getOptionValues(controller.$element.find("select"));
         var variantIndex = ProductJS.Utilities.getVariant(optionValues, controller.product.selectOptions, controller.product.variants);
         if (variantIndex > -1) {
             controller.product.variant = controller.product.variants[variantIndex];
         }
     };
-    console.log("variantSelectorsController", data);
 };
 
 rivets.components["product-variant-selectors"] = {

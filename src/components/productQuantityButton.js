@@ -20,7 +20,7 @@ ProductJS.Components.productQuantityButtonCtr = function (element, data) {
   controller.increase = Number(data.increase);
   controller.min = data.min;
 
-  console.log("productQuantityButtonCtr", controller);
+  // console.log("productQuantityButtonCtr", controller);
 
   if(typeof controller.start !== 'number') {
     controller.start = window.ProductJS.settings.quantity;

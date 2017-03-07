@@ -18,7 +18,7 @@ ProductJS.Components.productVariantSelectorsCtr = function (element, data) {
     var controller = this;
 
     this.onOptionChange = function() {
-      console.log('onOptionChange', this, controller);
+      // console.log('onOptionChange', this, controller);
       var optionValues = ProductJS.Utilities.getOptionValues(controller.$element.find('select'));
       var variantIndex = ProductJS.Utilities.getVariant(optionValues, controller.product.selectOptions, controller.product.variants);
       if(variantIndex > -1) {
@@ -26,7 +26,7 @@ ProductJS.Components.productVariantSelectorsCtr = function (element, data) {
       }
     }
 
-    console.log('variantSelectorsController', data);
+    // console.log('variantSelectorsController', data);
 }
     
 

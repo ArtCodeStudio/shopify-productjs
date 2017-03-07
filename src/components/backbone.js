@@ -35,6 +35,7 @@ rivets.components['backbone'] = {
   // component (either from rivets.init or the attributes on the component
   // element in the template).
   initialize: function(el, data) {
+    console.log("init backbone", el, data);
     if(!data.product) {
       console.error(new Error("function attribute is required"));
     }

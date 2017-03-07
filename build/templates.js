@@ -8,6 +8,8 @@ if(typeof ProductJS.templates !== 'object') {
 
 ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
 
+ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100">{ label }</button></div>';
+
 ProductJS.templates.productB2bButton = '<div class="d-flex justify-content-center w-100 pt-4"><button rv-hide="product.b2b_cart | contains \'id\' product.variant.id" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="product.b2b_cart | contains \'id\' product.variant.id" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
 
 ProductJS.templates.productB2bList = '<table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option">{ option }</td><td data-type="quantity">{ variant.quantity }</td></tr></tbody></table>';

@@ -52,7 +52,7 @@ ProductJS.Components.productVariantDropdownsCtr = function (element, data) {
 
   }
 
-  console.log('productVariantDropdownsCtr', data);
+  // console.log('productVariantDropdownsCtr', data);
 }
     
 
