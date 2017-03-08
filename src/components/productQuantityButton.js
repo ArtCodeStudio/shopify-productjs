@@ -41,6 +41,8 @@ ProductJS.Components.productQuantityButtonCtr = function (element, data) {
     if (controller.product.variant.quantity < controller.min) {
         controller.product.variant.quantity = controller.min;
     }
+
+    $(document).trigger('product.variant.quantity.change', controller.product.variant.quantity);
   }
 
   controller.onClickIncrease = function () {
@@ -51,6 +53,8 @@ ProductJS.Components.productQuantityButtonCtr = function (element, data) {
     }
 
     controller.product.variant.quantity += controller.increase;
+    
+    $(document).trigger('product.variant.quantity.change', controller.product.variant.quantity);
   }
 
   // Make sure value is always a Number

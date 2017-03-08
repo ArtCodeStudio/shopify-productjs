@@ -38,22 +38,26 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
   /**
    * Select variant from table row
    */
-  controller.onClickRow = function () {
-    var $tableRow = $(this);
+  controller.onClickRow = function (event) {
+    // console.log("event", event);
+    var $tableRow = $(this); // also possible: var $tableRow = $(event.target).parent();
     var $cols = $tableRow.children();
 
     $cols.each(function( i ) {
         var $col = $(this);
-        var value = String($col.data('value'));
-        var index = Number($col.data('index'));
         var type = String($col.data('type'));
+        // console.log("type", type);
         switch (type) {
             case 'option':
+                var value = String($col.data('value'));
+                var index = Number($col.data('index'));
+                // console.log("value", value);
+                // console.log("index", index);
                 var selectOption = controller.product.selectOptions[index];
-                var openIndex = ProductJS.Utilities.getCurrentOptionIndex(selectOption, value);
-                if(openIndex > -1) {
+                var optionIndex = ProductJS.Utilities.getCurrentOptionIndex(selectOption, value);
+                if(optionIndex > -1) {
                     selectOption.select = value;
-                    selectOption.select.index = openIndex;
+                    selectOption.select.index = optionIndex;
                     controller.product = ProductJS.Utilities.setVariant(controller.product);
                 } else {
                     console.error("Open value not found", "value", value, "index", index, "product", controller.product);

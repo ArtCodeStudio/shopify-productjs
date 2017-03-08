@@ -5,9 +5,9 @@
   "main": "./dist/product.js",
   "scripts": {
     "templates": "node templates.js",
-    "concat": "npm run templates && ./node_modules/.bin/uglifyjs src/utilities.js src/b2bCart.js src/formatters.js build/templates.js src/components/*.js src/product.js -o dist/product.js -b",
+    "concat": "npm run templates &&  ./node_modules/.bin/uglifyjs src/utilities.js src/b2bcart.js src/binders.js src/formatters.js build/templates.js src/components/*.js src/product.js -o dist/product.js -b",
     "minify": "npm run concat && ./node_modules/.bin/uglifyjs dist/product.js -o dist/product.min.js",
-    "watch": "./node_modules/.bin/watch 'npm run minify' src"
+    "watch": "./node_modules/.bin/watch 'npm run concat' src"
   },
   "repository": {
     "type": "git",

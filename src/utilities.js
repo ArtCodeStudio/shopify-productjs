@@ -70,7 +70,7 @@ ProductJS.Utilities.splitOptions = function (product) {
   product.selectOptions = [];
   for (var index = 0; index < product.options.length; index++) {
     var optionTitle = product.options[index];
-    console.log("optionTitle", optionTitle);
+    //console.log("optionTitle", optionTitle);
     product.selectOptions.push({
       index: index,
       title: optionTitle,
@@ -168,13 +168,13 @@ ProductJS.Utilities.cacheProduct = function (product) {
     return product;
   }
   
-  if(ProductJS.cache[product.title]) {
+  if(ProductJS.cache[product.handle]) {
     // if product is cached
-    console.log("product is cached", ProductJS.cache[product.title]);
-    return ProductJS.cache[product.title];
+    // console.log("product is cached", ProductJS.cache[product.handle]);
+    return ProductJS.cache[product.handle];
   } else {
     product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
-    ProductJS.cache[product.title] = product;
+    ProductJS.cache[product.handle] = product;
   }
   return product;
 }
@@ -222,12 +222,10 @@ ProductJS.Utilities.setVariant = function (product) {
   // console.log("setVariant");
   var variantIndex = ProductJS.Utilities.getVariant(null, product.selectOptions, product.variants);
   if(variantIndex !== -1) {
-    console.log("set variant to", product.variants[variantIndex]);
-
+    // console.log("set variant to", product.variants[variantIndex]);
     product.variant = product.variants[variantIndex];
-
-    // product = ProductJS.Utilities.extendProduct(product, product.variants[variantIndex]);
   }
+  $(document).trigger('product.variant.change', product.variant);
   return product;
 }
 
@@ -261,7 +259,7 @@ ProductJS.Utilities.mergeCart = function (product, options, cb) {
   $.getJSON('/cart.js', function(cart) {
     // console.log( "success" );
   }).done(function(cart) {
-    console.log( "second success", cart );
+    // console.log( "second success", cart );
 
     // mark all variants to "not in cart"  
     product.variantInCart = false;
@@ -286,7 +284,7 @@ ProductJS.Utilities.mergeCart = function (product, options, cb) {
         console.warn("Variant id "+item.variant_id+" not found!", product);
       }
     }
-    console.log("mergeCart", product);
+    // console.log("mergeCart", product);
     return cb(null, product);
 
   })

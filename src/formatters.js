@@ -151,7 +151,7 @@ rivets.formatters.default = function(value, args) {
  */
 rivets.formatters.contains = function(value, attr, search) {
 
-  console.log("contains", value, attr, search);
+  // console.log("contains", value, attr, search);
 
   if(!ProductJS.Utilities.isArray(value)) {
     console.warn("not an array");

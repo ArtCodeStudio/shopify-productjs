@@ -6,7 +6,7 @@
     </tr>
   </thead>
   <tbody class="d-flex flex-column-reverse">
-    <tr rv-each-variant="product.b2b_cart" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch">
+    <tr rv-each-variant="product.b2b_cart" rv-hide="variant.quantity | lt 1" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch">
       <td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option" >{ option }</td>
       <td data-type="quantity">{ variant.quantity }</td>
     </tr>

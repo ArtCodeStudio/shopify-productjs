@@ -1,4 +1,4 @@
 <div class="d-flex justify-content-center w-100 pt-4">
-    <button rv-hide="product.b2b_cart | contains 'id' product.variant.id" rv-on-click="add" type="button" class="btn btn-secondary">Add</button>
-    <button rv-show="product.b2b_cart | contains 'id' product.variant.id" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button>
+    <button rv-hide="showRemove" rv-on-click="add" type="button" class="btn btn-secondary">Add</button>
+    <button rv-show="showRemove" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button>
 </div>

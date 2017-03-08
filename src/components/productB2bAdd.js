@@ -22,28 +22,7 @@ ProductJS.Components.productB2bAddCtr = function (element, data) {
 
   controller.addListToCart = function () {
     var $button = $(this);
-    console.log("onClick", $button);
-    for (var i = 0; i < controller.product.b2b_cart.length; i++) {
-        var variant = controller.product.b2b_cart[i];
-        console.log(variant.id, variant.quantity);
-        var properties = {};
-        if(typeof variant.quantity === 'number' && variant.quantity > 0) {
-            CartJS.addItem(variant.id, variant.quantity, properties, {
-                "success": function(data, textStatus, jqXHR) {
-                    console.log(data, CartJS.cart);
-                // alertify.success(window.translations.cart.general.added.replace('[title]', data.product_title));
-                },
-                "error": function(jqXHR, textStatus, errorThrown) {
-                    console.error(jqXHR, textStatus, errorThrown);
-                    console.error(jqXHR.responseJSON.message);
-                    console.error(jqXHR.responseJSON.description);
-                    console.error(jqXHR.responseJSON.status);
-                    // alertify.error(jqXHR.responseJSON.description);
-                }
-            });
-        }
-
-    }
+    ProductJS.B2bCart.updateCart(controller.product);
   }
 
   console.log("productB2bAddCtr", controller);
@@ -55,7 +34,7 @@ rivets.components['product-b2b-add'] = {
   },
 
   initialize: function(el, data) {
-    console.log("init productB2bAddCtr", el, data);
+    // console.log("init productB2bAddCtr", el, data);
     if(!data.product) {
       console.error(new Error("function attribute is required"));
     }

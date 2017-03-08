@@ -15,10 +15,26 @@ ProductJS.Components.productB2bButtonCtr = function (element, data) {
   var controller = this;
   controller.product = data.product;
   controller.$element = $(element);
+  controller.showRemove = false;
 
   if(!ProductJS.Utilities.isArray(controller.product.b2b_cart)) {
       controller.product.b2b_cart = [];
   }
+
+  var onChange = function (event, object) {
+    console.log('onChange');
+    var index = ProductJS.B2bCart.getItem(controller.product.b2b_cart, controller.product.variant.id);
+    if(index > -1 && controller.product.variant.quantity > 0) {
+      controller.showRemove = true;
+    } else {
+      controller.showRemove = false;
+    }
+  }
+
+
+  $(document).on('b2bcart.change', onChange);
+  $(document).on('product.variant.change', onChange);
+  $(document).on('product.variant.quantity.change', onChange);  
 
   controller.add = function () {
     ProductJS.B2bCart.add(controller.product, controller.product.variant, {
