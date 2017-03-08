@@ -1,4 +1,4 @@
-<div class="dropdown" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title">
+<div class="dropdown" rv-hide="product.variants | lengthLt 2" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title">
   <button rv-id="select.title | handleize | append '-dropdown-toggle'" rv-class="dropdownButtonClass | append ' btn btn-secondary dropdown-toggle'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
     { select.select }
   </button>

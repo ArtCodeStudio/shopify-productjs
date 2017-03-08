@@ -126,6 +126,10 @@ rivets.formatters.productImageSize = rivets.formatters.product_image_size;
 
 // Additional formatters for ProductJS
 
+rivets.formatters.lengthLt = function(a, b) {
+  return a.length < b;
+};
+
 /**
  * Formats a string into a handle.
  * @see https://help.shopify.com/themes/liquid/filters/string-filters#handle-handleize

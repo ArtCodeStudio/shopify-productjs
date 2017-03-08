@@ -18,10 +18,9 @@ ProductJS.Components.productB2bAddCtr = function (element, data) {
   controller.$element = $(element);
   controller.label = data.label;
 
-  console.log("CartJS.cart", CartJS.cart);
+  // console.log("CartJS.cart", CartJS.cart);
 
   controller.addListToCart = function () {
-    var $button = $(this);
     ProductJS.B2bCart.updateCart(controller.product);
   }
 

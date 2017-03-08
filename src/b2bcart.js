@@ -118,43 +118,46 @@ ProductJS.B2bCart.updateCart = function (product) {
     }
   }
 
-  console.log("adds", adds);
-  console.log("updates", updates);
-  console.log("removes", removes);
+  // console.log("adds", adds);
+  // console.log("updates", updates);
+  // console.log("removes", removes);
 
+  if(Object.keys(updates).length > 0) {
+    CartJS.updateItemQuantitiesById(updates, {
+      "success": function(data, textStatus, jqXHR) {
+        console.log('success updates', data);
+      },
+      "error": function(jqXHR, textStatus, errorThrown) {
+        console.error(jqXHR, textStatus, errorThrown);
+        console.error(jqXHR.responseJSON.message);
+        console.error(jqXHR.responseJSON.description);
+        console.error(jqXHR.responseJSON.status);
+        // alertify.error(jqXHR.responseJSON.description);
+      }
+    });
+  }
 
-  CartJS.updateItemQuantitiesById(updates, {
-    "success": function(data, textStatus, jqXHR) {
-      console.log('success updates', data, textStatus, jqXHR);
-    },
-    "error": function(jqXHR, textStatus, errorThrown) {
-      console.error(jqXHR, textStatus, errorThrown);
-      console.error(jqXHR.responseJSON.message);
-      console.error(jqXHR.responseJSON.description);
-      console.error(jqXHR.responseJSON.status);
-      // alertify.error(jqXHR.responseJSON.description);
-    }
-  });
-
-  CartJS.updateItemQuantitiesById(removes, {
-    "success": function(data, textStatus, jqXHR) {
-      console.log('success removes', data, textStatus, jqXHR);
-    },
-    "error": function(jqXHR, textStatus, errorThrown) {
-      console.error(jqXHR, textStatus, errorThrown);
-      console.error(jqXHR.responseJSON.message);
-      console.error(jqXHR.responseJSON.description);
-      console.error(jqXHR.responseJSON.status);
-      // alertify.error(jqXHR.responseJSON.description);
-    }
-  });
+  if(Object.keys(removes).length > 0) {
+    CartJS.updateItemQuantitiesById(removes, {
+      "success": function(data, textStatus, jqXHR) {
+        console.log('success removes', data);
+      },
+      "error": function(jqXHR, textStatus, errorThrown) {
+        console.error(jqXHR, textStatus, errorThrown);
+        console.error(jqXHR.responseJSON.message);
+        console.error(jqXHR.responseJSON.description);
+        console.error(jqXHR.responseJSON.status);
+        // alertify.error(jqXHR.responseJSON.description);
+      }
+    });
+  }
 
   for (var a = 0; a < adds.length; a++) {
     var variant = adds[a];
 
     CartJS.addItem(variant.id, variant.quantity, properties, {
       "success": function(data, textStatus, jqXHR) {
-        console.log('success add', data, textStatus, jqXHR);
+        console.log('success add', data);
         // alertify.success(window.translations.cart.general.added.replace('[title]', data.product_title));
       },
       "error": function(jqXHR, textStatus, errorThrown) {
@@ -167,6 +170,4 @@ ProductJS.B2bCart.updateCart = function (product) {
     });
   }
 
-  // CartJS.updateItemQuantitiesById(updates);
-
-  }
+}

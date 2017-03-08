@@ -48,26 +48,26 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
         var type = String($col.data('type'));
         // console.log("type", type);
         switch (type) {
-            case 'option':
-                var value = String($col.data('value'));
-                var index = Number($col.data('index'));
-                // console.log("value", value);
-                // console.log("index", index);
-                var selectOption = controller.product.selectOptions[index];
-                var optionIndex = ProductJS.Utilities.getCurrentOptionIndex(selectOption, value);
-                if(optionIndex > -1) {
-                    selectOption.select = value;
-                    selectOption.select.index = optionIndex;
-                    controller.product = ProductJS.Utilities.setVariant(controller.product);
-                } else {
-                    console.error("Open value not found", "value", value, "index", index, "product", controller.product);
-                }
-                break;
-            case 'quantity':
-                break;
-            default:
-                console.warn("Unknown column type", type);
-                break;
+          case 'option':
+            var value = String($col.data('value'));
+            var index = Number($col.data('index'));
+            // console.log("value", value);
+            // console.log("index", index);
+            var selectOption = controller.product.selectOptions[index];
+            var optionIndex = ProductJS.Utilities.getCurrentOptionIndex(selectOption, value);
+            if(optionIndex > -1) {
+                selectOption.select = value;
+                selectOption.select.index = optionIndex;
+                controller.product = ProductJS.Utilities.setVariant(controller.product);
+            } else {
+                console.error("Open value not found", "value", value, "index", index, "product", controller.product);
+            }
+            break;
+          case 'quantity':
+            break;
+          default:
+            console.warn("Unknown column type", type);
+            break;
         }
     });
 

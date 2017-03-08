@@ -31,7 +31,6 @@ ProductJS.Components.productB2bButtonCtr = function (element, data) {
     }
   }
 
-
   $(document).on('b2bcart.change', onChange);
   $(document).on('product.variant.change', onChange);
   $(document).on('product.variant.quantity.change', onChange);  
@@ -47,6 +46,11 @@ ProductJS.Components.productB2bButtonCtr = function (element, data) {
     var $button = $(this);
     var index = ProductJS.B2bCart.getItem(controller.product.b2b_cart, controller.product.variant.id);
     controller.product = ProductJS.B2bCart.remove(controller.product, controller.product.variant, { resetQuantity: true })
+  }
+
+  // If prodeuct has no options hide dropdown and add the online on variant to the b2b list
+  if(controller.product.variants.length <= 1) {
+    controller.add();
   }
 
 }

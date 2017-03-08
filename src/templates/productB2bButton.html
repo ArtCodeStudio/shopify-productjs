@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-center w-100 pt-4">
+<div rv-hide="product.variants | lengthLt 2" class="d-flex justify-content-center w-100 pt-4">
     <button rv-hide="showRemove" rv-on-click="add" type="button" class="btn btn-secondary">Add</button>
     <button rv-show="showRemove" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button>
 </div>

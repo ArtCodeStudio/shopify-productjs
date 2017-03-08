@@ -1,14 +1,16 @@
-<table rv-hide="product.b2b_cart | empty" class="table table-hover">
-  <thead>
-    <tr class="d-flex flex-row align-items-stretch">
-      <th rv-each-select="product.selectOptions">{ select.title }</th>
-      <th>Quantity</th>
-    </tr>
-  </thead>
-  <tbody class="d-flex flex-column-reverse">
-    <tr rv-each-variant="product.b2b_cart" rv-hide="variant.quantity | lt 1" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch">
-      <td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option" >{ option }</td>
-      <td data-type="quantity">{ variant.quantity }</td>
-    </tr>
-  </tbody>
-</table>
+<div rv-hide="product.variants | lengthLt 2">
+  <table rv-hide="product.b2b_cart | empty" class="table table-hover">
+    <thead>
+      <tr class="d-flex flex-row align-items-stretch">
+        <th rv-each-select="product.selectOptions">{ select.title }</th>
+        <th>Quantity</th>
+      </tr>
+    </thead>
+    <tbody class="d-flex flex-column-reverse">
+      <tr rv-each-variant="product.b2b_cart" rv-hide="variant.quantity | lt 1" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch">
+        <td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option" >{ option }</td>
+        <td data-type="quantity">{ variant.quantity }</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
