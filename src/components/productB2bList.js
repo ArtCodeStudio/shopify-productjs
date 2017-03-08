@@ -24,16 +24,17 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
     handle: function (product, index) {
       product = ProductJS.B2bCart.add(product, product.variants[index]);
     }
-  }, function (error, product) {
-    if(error) {
-        return error;
-    }
+  }, function (error, product) {});
 
-    if(typeof product === 'object') {
-        controller.product = product;
-    }
-    
+
+  $(document).on('cart.requestComplete', function(event, cart) {
+    ProductJS.Utilities.mergeCart(controller.product, {
+      handle: function (product, index) {
+        product = ProductJS.B2bCart.add(product, product.variants[index]);
+      }
+    }, function (error, product) {});
   });
+
 
   /**
    * Select variant from table row

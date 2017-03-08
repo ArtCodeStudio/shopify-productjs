@@ -8,7 +8,7 @@ if(typeof ProductJS.templates !== 'object') {
 
 ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
 
-ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100">{ label }</button></div>';
+ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100"><span rv-show="product.variantInCart">{ updateLabel }</span> <span rv-hide="product.variantInCart">{ addLabel }</span></button></div>';
 
 ProductJS.templates.productB2bButton = '<div rv-hide="product.variants | lengthLt 2" class="d-flex justify-content-center w-100 pt-4"><button rv-hide="showRemove" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="showRemove" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
 

@@ -252,7 +252,7 @@ ProductJS.Utilities.findVariant = function (product, id) {
  * Find variants that are already in the shopify cart
  * 
  * @param product
- * @param options.pushTo - push found variants to this array if set
+ * @param options.handle
  * @param cb
  */
 ProductJS.Utilities.mergeCart = function (product, options, cb) {

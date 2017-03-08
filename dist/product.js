@@ -513,7 +513,7 @@ if (typeof ProductJS.templates !== "object") {
 
 ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
 
-ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100">{ label }</button></div>';
+ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100"><span rv-show="product.variantInCart">{ updateLabel }</span> <span rv-hide="product.variantInCart">{ addLabel }</span></button></div>';
 
 ProductJS.templates.productB2bButton = '<div rv-hide="product.variants | lengthLt 2" class="d-flex justify-content-center w-100 pt-4"><button rv-hide="showRemove" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="showRemove" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
 
@@ -569,7 +569,8 @@ ProductJS.Components.productB2bAddCtr = function(element, data) {
     var controller = this;
     controller.product = data.product;
     controller.$element = $(element);
-    controller.label = data.label;
+    controller.addLabel = data.addLabel;
+    controller.updateLabel = data.updateLabel;
     controller.addListToCart = function() {
         ProductJS.B2bCart.updateCart(controller.product);
     };
@@ -581,6 +582,7 @@ rivets.components["product-b2b-add"] = {
         return ProductJS.templates.productB2bAdd;
     },
     initialize: function(el, data) {
+        console.log("init productB2bAddCtr", el, data);
         if (!data.product) {
             console.error(new Error("function attribute is required"));
         }
@@ -662,13 +664,13 @@ ProductJS.Components.productB2bListCtr = function(element, data) {
         handle: function(product, index) {
             product = ProductJS.B2bCart.add(product, product.variants[index]);
         }
-    }, function(error, product) {
-        if (error) {
-            return error;
-        }
-        if (typeof product === "object") {
-            controller.product = product;
-        }
+    }, function(error, product) {});
+    $(document).on("cart.requestComplete", function(event, cart) {
+        ProductJS.Utilities.mergeCart(controller.product, {
+            handle: function(product, index) {
+                product = ProductJS.B2bCart.add(product, product.variants[index]);
+            }
+        }, function(error, product) {});
     });
     controller.onClickRow = function(event) {
         var $tableRow = $(this);
