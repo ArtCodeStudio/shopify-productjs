@@ -1,4 +1,4 @@
-<select rv-hide="product.variants | lengthLt 2" rv-on-change="onOptionChange" rv-each-select="product.selectOptions" rv-class="select.title | handleize | append ' custom-select form-control'" rv-id="select.title | handleize | append ' custom-select form-control'">
+<select rv-hide="product.variants | size | lt 2" rv-on-change="onOptionChange" rv-each-select="product.selectOptions" rv-class="select.title | handleize | append ' custom-select form-control'" rv-id="select.title | handleize | append ' custom-select form-control'">
     <!--<option rv-value="false">{ select.title }</option>-->
     <option rv-each-option="select.values" rv-value="option">{ option }</option>
 </select>

@@ -17,9 +17,13 @@ if(typeof window.ProductJS.settings !== 'object') {
  * @param options.moneyFormat
  * @param options.moneyWithCurrencyFormat
  */
-window.ProductJS.init = function (product, options) {
+window.ProductJS.init = function (settings) {
   console.log('ProductJS.init', product);
-  ProductJS.settings = ProductJS.Utilities.extend(ProductJS.settings, options);
+  ProductJS.settings = ProductJS.Utilities.extend(ProductJS.settings, settings);
+}
+
+window.ProductJS.loadProduct = function (product) {
+  console.log('ProductJS.loadProduct', product);
   product = ProductJS.Utilities.cacheProduct(product);
-  rivets.bind($('#handle-'+product.handle), {product: product});
+  rivets.bind($('#handle-'+product.handle), {product: product, settings: ProductJS.settings});
 }

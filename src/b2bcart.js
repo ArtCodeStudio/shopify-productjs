@@ -169,5 +169,44 @@ ProductJS.B2bCart.updateCart = function (product) {
       }
     });
   }
+}
 
+ProductJS.B2bCart.findGrouped = function(grouped, handle) {
+  var index = -1;
+  for (var i = 0; i < grouped.length; i++) {
+    var item = grouped[i];
+    if(item.handle === handle) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+ProductJS.B2bCart.group = function(cart) {
+  cart.grouped = [];
+  for (var i = 0; i < cart.items.length; i++) {
+    var item = cart.items[i];
+    var handle = item.handle;
+    var index = ProductJS.B2bCart.findGrouped(cart.grouped , handle);
+    if(index > -1) {
+      cart.grouped[index].variants.push(cart.items[i]);
+    } else {
+      cart.grouped.push({
+        handle: handle,
+        image: cart.items[i].image,
+        vendor: cart.items[i].vendor,
+        product_title: cart.items[i].product_title,
+        variants: [cart.items[i]]
+      });
+    }
+  }
+  console.log("grouped cart", cart);
+  return cart;
+}
+
+ProductJS.B2bCart.loadCart = function(cart) {
+  console.log("loadCart", cart);
+  cart = ProductJS.B2bCart.group(cart);
+  rivets.bind($('#cart'), {cart: cart, settings: ProductJS.settings});
 }

@@ -7,3 +7,8 @@ rivets.binders.hide = function(el, value) {
         $element.attr('style', '');
     }
 };
+
+rivets.binders['background-image'] = function(el, value) {
+    var $element = $(el);
+    $element.css('background-image', 'url('+value+')');
+};

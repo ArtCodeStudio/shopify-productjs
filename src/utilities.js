@@ -44,7 +44,8 @@ ProductJS.Utilities.formatMoney = function(value, format, formatName, currency) 
  * @see http://jszen.com/best-way-to-get-unique-values-of-an-array-in-javascript.7.html
  */
 ProductJS.Utilities.unique = function(array) {
-	var n = {},r=[];
+	var n = {};
+  var r=[];
 	for(var i = 0; i < array.length; i++) 
 	{
 		if (!n[array[i]]) 
@@ -281,7 +282,7 @@ ProductJS.Utilities.mergeCart = function (product, options, cb) {
           options.handle(product, index);
         }
       } else {
-        console.warn("Variant id "+item.variant_id+" not found!", product);
+        // console.warn("Variant id "+item.variant_id+" not found!", product);
       }
     }
     // console.log("mergeCart", product);

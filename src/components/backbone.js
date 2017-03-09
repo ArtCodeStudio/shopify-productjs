@@ -37,7 +37,7 @@ rivets.components['backbone'] = {
   initialize: function(el, data) {
     console.log("init backbone", el, data);
     if(!data.product) {
-      console.error(new Error("function attribute is required"));
+      console.error(new Error("product attribute is required"));
     }
     return new ProductJS.Components.backboneCtr(el, data);
   }

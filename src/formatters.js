@@ -126,8 +126,13 @@ rivets.formatters.productImageSize = rivets.formatters.product_image_size;
 
 // Additional formatters for ProductJS
 
-rivets.formatters.lengthLt = function(a, b) {
-  return a.length < b;
+/**
+ * Returns the size of a string (the number of characters) or an array (the number of elements).
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/array-filters#size
+ */
+rivets.formatters.size = function(a) {
+  return a.length;
 };
 
 /**
