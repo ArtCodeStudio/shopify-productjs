@@ -197,6 +197,7 @@ ProductJS.B2bCart.group = function(cart) {
         image: cart.items[i].image,
         vendor: cart.items[i].vendor,
         product_title: cart.items[i].product_title,
+        variant: [cart.items[i]], // auto select first variant
         variants: [cart.items[i]]
       });
     }
@@ -206,7 +207,9 @@ ProductJS.B2bCart.group = function(cart) {
 }
 
 ProductJS.B2bCart.loadCart = function(cart) {
+  $(document).trigger('b2bcart.bind.befor');
   console.log("loadCart", cart);
   cart = ProductJS.B2bCart.group(cart);
   rivets.bind($('#cart'), {cart: cart, settings: ProductJS.settings});
+  $(document).trigger('b2bcart.bind.after');
 }

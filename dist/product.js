@@ -360,6 +360,7 @@ ProductJS.B2bCart.group = function(cart) {
                 image: cart.items[i].image,
                 vendor: cart.items[i].vendor,
                 product_title: cart.items[i].product_title,
+                variant: [ cart.items[i] ],
                 variants: [ cart.items[i] ]
             });
         }
@@ -369,12 +370,14 @@ ProductJS.B2bCart.group = function(cart) {
 };
 
 ProductJS.B2bCart.loadCart = function(cart) {
+    $(document).trigger("b2bcart.bind.befor");
     console.log("loadCart", cart);
     cart = ProductJS.B2bCart.group(cart);
     rivets.bind($("#cart"), {
         cart: cart,
         settings: ProductJS.settings
     });
+    $(document).trigger("b2bcart.bind.after");
 };
 
 rivets.binders.hide = function(el, value) {
@@ -929,10 +932,12 @@ window.ProductJS.init = function(settings) {
 };
 
 window.ProductJS.loadProduct = function(product) {
+    $(document).trigger("product.bind.befor");
     console.log("ProductJS.loadProduct", product);
     product = ProductJS.Utilities.cacheProduct(product);
     rivets.bind($("#handle-" + product.handle), {
         product: product,
         settings: ProductJS.settings
     });
+    $(document).trigger("product.bind.after");
 };
