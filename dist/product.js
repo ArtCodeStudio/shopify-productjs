@@ -98,17 +98,113 @@ ProductJS.Utilities.getOptionValues = function($selects) {
     return optionValues;
 };
 
+ProductJS.Utilities.urlExists = function(url, cb) {
+    jQuery.ajax({
+        url: url,
+        dataType: "text",
+        type: "GET",
+        complete: function(xhr) {
+            if (typeof cb === "function") cb.apply(this, [ xhr.status, url ]);
+        }
+    });
+};
+
+ProductJS.Utilities.rand = function(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
 ProductJS.Utilities.cacheProduct = function(product) {
-    if (ProductJS.settings.cache === false) {
+    if (typeof product.handle === "undefined") {
+        var error = new Error("Product object need the handle property!");
+        console.error(error);
         return product;
     }
+    if (ProductJS.settings.cache === false) {
+        product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
+    }
     if (ProductJS.cache[product.handle]) {
+        console.log("product is cached", ProductJS.cache[product.handle]);
         return ProductJS.cache[product.handle];
     } else {
         product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
         ProductJS.cache[product.handle] = product;
     }
     return product;
+};
+
+ProductJS.Utilities.getPage = function(url, callback) {
+    console.log("getPage", url);
+    if (typeof Barba === "undefined") {
+        var error = "You need barba.js to use this function, see http://barbajs.org/";
+        console.error(error);
+        return callback(error);
+    }
+    var xhr = Barba.BaseCache.get(url);
+    if (!xhr) {
+        xhr = Barba.Utils.xhr(url);
+        Barba.BaseCache.set(url, xhr);
+    }
+    xhr.then(function(response) {
+        var newContainer = Barba.Pjax.Dom.parseResponse(response);
+        var $newContainer = $(newContainer);
+        var dataset = newContainer.dataset;
+        var data = ProductJS.Utilities.parseDatasetJsonStrings(dataset);
+        var currentStatus = Barba.Pjax.History.currentStatus();
+        currentStatus.namespace = Barba.Pjax.Dom.getNamespace(newContainer);
+        return callback(null, {
+            url: url,
+            container: newContainer,
+            $container: $newContainer,
+            dataset: dataset,
+            data: data,
+            status: currentStatus
+        });
+    }).catch(function(error) {
+        console.error("Failed!", error);
+        callback(error);
+    });
+};
+
+ProductJS.Utilities.getProduct = function(handle, callback) {
+    if (typeof handle === "undefined") {
+        var error = new Error("handle property is required!");
+        console.error(error);
+        return callback(error);
+    }
+    if (ProductJS.settings.cache === true && ProductJS.cache[handle]) {
+        var product = ProductJS.cache[handle];
+        return callback(null, product);
+    } else {
+        var url = "/products/" + handle;
+        ProductJS.Utilities.getPage(url, function(error, result) {
+            if (error !== null) {
+                return callback(error);
+            }
+            product = ProductJS.Utilities.cacheProduct(result.data.product);
+            return callback(null, product);
+        });
+    }
+    return product;
+};
+
+ProductJS.Utilities.getProducts = function(products, callback) {
+    if (!async || !async.transform) {
+        var error = new Error("You need async.transform to use this function! http://caolan.github.io/async/");
+        console.error(error);
+        return callback(error);
+    }
+    async.transform(products, function(acc, product, index, callback) {
+        ProductJS.Utilities.getProduct(product.handle, function(error, product) {
+            if (error !== null) {
+                return callback(error);
+            }
+            acc.push(product);
+            callback(null);
+        });
+    }, function(error, products) {
+        console.log("ProductJS.Utilities.getProducts result", error, products);
+        callback(error, products);
+    });
 };
 
 ProductJS.Utilities.getCurrentOptionValues = function(selectOptions) {
@@ -139,10 +235,10 @@ ProductJS.Utilities.setVariant = function(product) {
     return product;
 };
 
-ProductJS.Utilities.findVariant = function(product, id) {
+ProductJS.Utilities.findVariant = function(products, id) {
     var index = -1;
-    for (var i = 0; i < product.variants.length; i++) {
-        var variant = product.variants[i];
+    for (var i = 0; i < products.length; i++) {
+        var variant = products[i];
         if (variant.id === id) {
             index = i;
             break;
@@ -151,30 +247,37 @@ ProductJS.Utilities.findVariant = function(product, id) {
     return index;
 };
 
-ProductJS.Utilities.mergeCart = function(product, options, cb) {
-    $.getJSON("/cart.js", function(cart) {}).done(function(cart) {
-        product.variantInCart = false;
-        for (var i = 0; i < product.variants.length; i++) {
-            var variant = product.variants[i];
-            variant.inCart = false;
+ProductJS.Utilities.findVariantByHandle = function(products, handle) {
+    var index = -1;
+    for (var i = 0; i < products.length; i++) {
+        var product = products[i];
+        if (product.handle === handle) {
+            index = i;
+            break;
         }
-        for (var i = 0; i < cart.items.length; i++) {
-            var item = cart.items[i];
-            var index = ProductJS.Utilities.findVariant(product, item.variant_id);
-            if (index > -1) {
-                product.variants[index].quantity = item.quantity;
-                product.variants[index].inCart = true;
-                product.variantInCart = true;
-                if (typeof options === "object" && ProductJS.Utilities.isFunction(options.handle)) {
-                    options.handle(product, index);
-                }
-            } else {}
-        }
-        return cb(null, product);
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-        console.error(jqXHR.responseJSON.description, jqXHR.responseJSON.message);
-        return cb(jqXHR.responseJSON, product);
-    }).always(function() {});
+    }
+    return index;
+};
+
+ProductJS.Utilities.mergeCart = function(product, cart, options) {
+    product.variantInCart = false;
+    for (var i = 0; i < product.variants.length; i++) {
+        var variant = product.variants[i];
+        variant.inCart = false;
+    }
+    for (var i = 0; i < cart.items.length; i++) {
+        var item = cart.items[i];
+        var index = ProductJS.Utilities.findVariant(product.variants, item.variant_id);
+        if (index > -1) {
+            product.variants[index].quantity = item.quantity;
+            product.variants[index].inCart = true;
+            product.variantInCart = true;
+            if (typeof options === "object" && ProductJS.Utilities.isFunction(options.handle)) {
+                options.handle(product, index);
+            }
+        } else {}
+    }
+    return product;
 };
 
 ProductJS.Utilities.getVariant = function(optionValues, options, variants) {
@@ -200,6 +303,17 @@ ProductJS.Utilities.getVariant = function(optionValues, options, variants) {
         }
     }
     return variantIndex;
+};
+
+ProductJS.Utilities.parseDatasetJsonStrings = function(dataset) {
+    var data = {};
+    if (dataset.productJsonString) {
+        data.product = JSON.parse(dataset.productJsonString);
+        data.product.metafields = {
+            global: JSON.parse(dataset.productMetafieldsGlobalJsonString)
+        };
+    }
+    return data;
 };
 
 ProductJS.Utilities.getOption = function($select) {
@@ -334,38 +448,28 @@ ProductJS.B2bCart.updateCart = function(product) {
     }
 };
 
-ProductJS.B2bCart.findGrouped = function(grouped, handle) {
-    var index = -1;
-    for (var i = 0; i < grouped.length; i++) {
-        var item = grouped[i];
-        if (item.handle === handle) {
-            index = i;
-            break;
-        }
-    }
-    return index;
-};
-
 ProductJS.B2bCart.group = function(cart) {
-    cart.grouped = [];
+    cart.products = [];
     for (var i = 0; i < cart.items.length; i++) {
-        var item = cart.items[i];
-        var handle = item.handle;
-        var index = ProductJS.B2bCart.findGrouped(cart.grouped, handle);
+        var variant = cart.items[i];
+        variant.inCart = true;
+        var handle = variant.handle;
+        var index = ProductJS.Utilities.findVariantByHandle(cart.products, handle);
         if (index > -1) {
-            cart.grouped[index].variants.push(cart.items[i]);
+            cart.products[index].variants.push(variant);
         } else {
-            cart.grouped.push({
+            cart.products.push({
+                variantInCart: true,
                 handle: handle,
-                image: cart.items[i].image,
-                vendor: cart.items[i].vendor,
-                product_title: cart.items[i].product_title,
-                variant: [ cart.items[i] ],
-                variants: [ cart.items[i] ]
+                featured_image: variant.image,
+                vendor: variant.vendor,
+                title: variant.product_title,
+                variant: [ variant ],
+                variants: [ variant ]
             });
         }
     }
-    console.log("grouped cart", cart);
+    console.log("products cart", cart);
     return cart;
 };
 
@@ -373,11 +477,14 @@ ProductJS.B2bCart.loadCart = function(cart) {
     $(document).trigger("b2bcart.bind.befor");
     console.log("loadCart", cart);
     cart = ProductJS.B2bCart.group(cart);
-    rivets.bind($("#cart"), {
-        cart: cart,
-        settings: ProductJS.settings
+    ProductJS.Utilities.getProducts(cart.products, function(error, products) {
+        cart.products = products;
+        rivets.bind($("#cart"), {
+            cart: cart,
+            settings: ProductJS.settings
+        });
+        $(document).trigger("b2bcart.bind.after");
     });
-    $(document).trigger("b2bcart.bind.after");
 };
 
 rivets.binders.hide = function(el, value) {
@@ -522,10 +629,18 @@ rivets.formatters.size = function(a) {
     return a.length;
 };
 
+rivets.formatters.strip = function(str) {
+    return $.trim(str);
+};
+
+rivets.formatters.downcase = function(str) {
+    return str.toLowerCase();
+};
+
 rivets.formatters.handleize = function(str) {
-    str = jumplink.filter.strip(str);
+    str = rivets.formatters.strip(str);
     str = str.replace(/[^\w\s]/gi, "");
-    str = jumplink.filter.downcase(str);
+    str = rivets.formatters.downcase(str);
     return str.replace(/ /g, "-");
 };
 
@@ -553,6 +668,15 @@ rivets.formatters.contains = function(value, attr, search) {
     return false;
 };
 
+rivets.formatters.justDigits = function(str) {
+    var num = str.replace(/[^-\d\.]/g, "");
+    if (isNaN(num)) {
+        return 0;
+    } else {
+        return Number(num);
+    }
+};
+
 if (typeof ProductJS !== "object") {
     var ProductJS = {};
 }
@@ -561,19 +685,37 @@ if (typeof ProductJS.templates !== "object") {
     ProductJS.templates = {};
 }
 
-ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
+if (typeof ProductJS.templates.backbone !== "string") {
+    ProductJS.templates.backbone = '<h1 rv-on-click="onClick">{product.title}</h1>';
+}
 
-ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100"><span rv-show="product.variantInCart">{ updateLabel }</span> <span rv-hide="product.variantInCart">{ addLabel }</span></button></div>';
+if (typeof ProductJS.templates.product !== "string") {
+    ProductJS.templates.product = '<h1 rv-on-click="onClick">{product.title}</h1>';
+}
 
-ProductJS.templates.productB2bButton = '<div rv-hide="product.variants | size | lt 2" class="d-flex justify-content-center w-100 pt-4"><button rv-hide="showRemove" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="showRemove" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
+if (typeof ProductJS.templates.productB2bAdd !== "string") {
+    ProductJS.templates.productB2bAdd = '<div class="form-add-to-cart form-group"><button rv-on-click="addListToCart" type="button" name="add" class="btn btn-primary w-100"><span rv-show="product.variantInCart">{ updateLabel }</span> <span rv-hide="product.variantInCart">{ addLabel }</span></button></div>';
+}
 
-ProductJS.templates.productB2bList = '<div rv-hide="product.variants | size | lt 2"><table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" rv-hide="variant.quantity | lt 1" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option">{ option }</td><td data-type="quantity">{ variant.quantity }</td></tr></tbody></table></div>';
+if (typeof ProductJS.templates.productB2bButton !== "string") {
+    ProductJS.templates.productB2bButton = '<div rv-hide="product.variants | size | lt 2" class="d-flex justify-content-center w-100 pt-4"><button rv-hide="showRemove" rv-on-click="add" type="button" class="btn btn-secondary">Add</button> <button rv-show="showRemove" rv-on-click="remove" type="button" class="btn btn-secondary">Remove</button></div>';
+}
 
-ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="0" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
+if (typeof ProductJS.templates.productB2bList !== "string") {
+    ProductJS.templates.productB2bList = '<div rv-hide="product.variants | size | lt 2"><table rv-hide="product.b2b_cart | empty" class="table table-hover"><thead><tr class="d-flex flex-row align-items-stretch"><th rv-each-select="product.selectOptions">{ select.title }</th><th>Quantity</th></tr></thead><tbody class="d-flex flex-column-reverse"><tr rv-each-variant="product.b2b_cart" rv-hide="variant.quantity | lt 1" rv-on-click="onClickRow" class="d-flex flex-row align-items-stretch"><td rv-each-option="variant.options" rv-data-value="option" rv-data-index="%option%" data-type="option">{ option }</td><td data-type="quantity">{ variant.quantity }</td></tr></tbody></table></div>';
+}
 
-ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-hide="product.variants | size | lt 2" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><a class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option" href="#">{ option }</a></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="start" min="0" decrease="10" increase="10"></product-quantity-button>';
+if (typeof ProductJS.templates.productQuantityButton !== "string") {
+    ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="0" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
+}
 
-ProductJS.templates.productVariantSelectors = '<select rv-hide="product.variants | size | lt 2" rv-on-change="onOptionChange" rv-each-select="product.selectOptions" rv-class="select.title | handleize | append \' custom-select form-control\'" rv-id="select.title | handleize | append \' custom-select form-control\'"><!--<option rv-value="false">{ select.title }</option>--><option rv-each-option="select.values" rv-value="option">{ option }</option></select>';
+if (typeof ProductJS.templates.productVariantDropdowns !== "string") {
+    ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-hide="product.variants | size | lt 2" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><a class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option" href="#">{ option }</a></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="start" min="0" decrease="10" increase="10"></product-quantity-button>';
+}
+
+if (typeof ProductJS.templates.productVariantSelectors !== "string") {
+    ProductJS.templates.productVariantSelectors = '<select rv-hide="product.variants | size | lt 2" rv-on-change="onOptionChange" rv-each-select="product.selectOptions" rv-class="select.title | handleize | append \' custom-select form-control\'" rv-id="select.title | handleize | append \' custom-select form-control\'"><!--<option rv-value="false">{ select.title }</option>--><option rv-each-option="select.values" rv-value="option">{ option }</option></select>';
+}
 
 if (typeof ProductJS !== "object") {
     var ProductJS = {};
@@ -615,6 +757,32 @@ if (typeof ProductJS.Components !== "object") {
     ProductJS.Components = {};
 }
 
+ProductJS.Components.productCtr = function(element, data) {
+    var controller = this;
+    controller = ProductJS.Utilities.extend(controller, data);
+    controller.$element = $(element);
+};
+
+rivets.components["product"] = {
+    template: function() {
+        return ProductJS.templates.product;
+    },
+    initialize: function(el, data) {
+        if (!data.product) {
+            console.error(new Error("product attribute is required"));
+        }
+        return new ProductJS.Components.productCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
 ProductJS.Components.productB2bAddCtr = function(element, data) {
     var controller = this;
     controller.product = data.product;
@@ -624,7 +792,6 @@ ProductJS.Components.productB2bAddCtr = function(element, data) {
     controller.addListToCart = function() {
         ProductJS.B2bCart.updateCart(controller.product);
     };
-    console.log("productB2bAddCtr", controller);
 };
 
 rivets.components["product-b2b-add"] = {
@@ -632,7 +799,6 @@ rivets.components["product-b2b-add"] = {
         return ProductJS.templates.productB2bAdd;
     },
     initialize: function(el, data) {
-        console.log("init productB2bAddCtr", el, data);
         if (!data.product) {
             console.error(new Error("function attribute is required"));
         }
@@ -657,7 +823,6 @@ ProductJS.Components.productB2bButtonCtr = function(element, data) {
         controller.product.b2b_cart = [];
     }
     var onChange = function(event, object) {
-        console.log("onChange");
         var index = ProductJS.B2bCart.getItem(controller.product.b2b_cart, controller.product.variant.id);
         if (index > -1 && controller.product.variant.quantity > 0) {
             controller.showRemove = true;
@@ -710,17 +875,21 @@ ProductJS.Components.productB2bListCtr = function(element, data) {
     var controller = this;
     controller.product = data.product;
     controller.$element = $(element);
-    ProductJS.Utilities.mergeCart(controller.product, {
-        handle: function(product, index) {
-            product = ProductJS.B2bCart.add(product, product.variants[index]);
-        }
-    }, function(error, product) {});
-    $(document).on("cart.requestComplete", function(event, cart) {
-        ProductJS.Utilities.mergeCart(controller.product, {
+    $.getJSON("/cart.js").done(function(cart) {
+        controller.product = ProductJS.Utilities.mergeCart(controller.product, cart, {
             handle: function(product, index) {
                 product = ProductJS.B2bCart.add(product, product.variants[index]);
             }
-        }, function(error, product) {});
+        });
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.error(jqXHR.responseJSON.description, jqXHR.responseJSON.message);
+    });
+    $(document).on("cart.requestComplete", function(event, cart) {
+        controller.product = ProductJS.Utilities.mergeCart(controller.product, cart, {
+            handle: function(product, index) {
+                product = ProductJS.B2bCart.add(product, product.variants[index]);
+            }
+        });
     });
     controller.onClickRow = function(event) {
         var $tableRow = $(this);

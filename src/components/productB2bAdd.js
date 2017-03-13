@@ -25,7 +25,7 @@ ProductJS.Components.productB2bAddCtr = function (element, data) {
     ProductJS.B2bCart.updateCart(controller.product);
   }
 
-  console.log("productB2bAddCtr", controller);
+  // console.log("productB2bAddCtr", controller);
 }
 
 rivets.components['product-b2b-add'] = {
@@ -34,7 +34,7 @@ rivets.components['product-b2b-add'] = {
   },
 
   initialize: function(el, data) {
-    console.log("init productB2bAddCtr", el, data);
+    // console.log("init productB2bAddCtr", el, data);
     if(!data.product) {
       console.error(new Error("function attribute is required"));
     }

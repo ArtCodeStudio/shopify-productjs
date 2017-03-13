@@ -171,38 +171,31 @@ ProductJS.B2bCart.updateCart = function (product) {
   }
 }
 
-ProductJS.B2bCart.findGrouped = function(grouped, handle) {
-  var index = -1;
-  for (var i = 0; i < grouped.length; i++) {
-    var item = grouped[i];
-    if(item.handle === handle) {
-      index = i;
-      break;
-    }
-  }
-  return index;
-}
-
+/**
+ * Group Product variants to object like the normal product object
+ */
 ProductJS.B2bCart.group = function(cart) {
-  cart.grouped = [];
+  cart.products = [];
   for (var i = 0; i < cart.items.length; i++) {
-    var item = cart.items[i];
-    var handle = item.handle;
-    var index = ProductJS.B2bCart.findGrouped(cart.grouped , handle);
+    var variant = cart.items[i];
+    variant.inCart = true;
+    var handle = variant.handle;
+    var index = ProductJS.Utilities.findVariantByHandle(cart.products, handle);
     if(index > -1) {
-      cart.grouped[index].variants.push(cart.items[i]);
+      cart.products[index].variants.push(variant);
     } else {
-      cart.grouped.push({
+      cart.products.push({
+        variantInCart: true,
         handle: handle,
-        image: cart.items[i].image,
-        vendor: cart.items[i].vendor,
-        product_title: cart.items[i].product_title,
-        variant: [cart.items[i]], // auto select first variant
-        variants: [cart.items[i]]
+        featured_image: variant.image,
+        vendor: variant.vendor,
+        title: variant.product_title,
+        variant: [variant], // auto select first variant
+        variants: [variant]
       });
     }
   }
-  console.log("grouped cart", cart);
+  console.log("products cart", cart);
   return cart;
 }
 
@@ -210,6 +203,9 @@ ProductJS.B2bCart.loadCart = function(cart) {
   $(document).trigger('b2bcart.bind.befor');
   console.log("loadCart", cart);
   cart = ProductJS.B2bCart.group(cart);
-  rivets.bind($('#cart'), {cart: cart, settings: ProductJS.settings});
-  $(document).trigger('b2bcart.bind.after');
+  ProductJS.Utilities.getProducts(cart.products, function (error, products) {
+    cart.products = products;
+    rivets.bind($('#cart'), {cart: cart, settings: ProductJS.settings});
+    $(document).trigger('b2bcart.bind.after');
+  });
 }

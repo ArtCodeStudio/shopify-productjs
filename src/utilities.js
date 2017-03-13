@@ -158,6 +158,28 @@ ProductJS.Utilities.getOptionValues = function ($selects) {
 }
 
 /**
+ * Test if url exists
+ */
+ProductJS.Utilities.urlExists = function (url, cb){
+    jQuery.ajax({
+        url:      url,
+        dataType: 'text',
+        type:     'GET',
+        complete:  function(xhr){
+            if(typeof cb === 'function')
+               cb.apply(this, [xhr.status, url]);
+        }
+    });
+}
+
+/**
+ * Generate random number between two numbers
+ */
+ProductJS.Utilities.rand = function (min, max) {
+  return Math.floor(Math.random()*(max-min+1)+min);
+}
+
+/**
  * Cache Product selected variant and quantity 
  * 
  * @param product
@@ -165,19 +187,124 @@ ProductJS.Utilities.getOptionValues = function ($selects) {
  */
 ProductJS.Utilities.cacheProduct = function (product) {
 
-  if(ProductJS.settings.cache === false) {
+  if(typeof(product.handle) === 'undefined'){
+    var error = new Error('Product object need the handle property!');
+    console.error(error);
     return product;
+  }
+
+  if(ProductJS.settings.cache === false) {
+    product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
   }
   
   if(ProductJS.cache[product.handle]) {
     // if product is cached
-    // console.log("product is cached", ProductJS.cache[product.handle]);
+    console.log("product is cached", ProductJS.cache[product.handle]);
     return ProductJS.cache[product.handle];
   } else {
     product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
     ProductJS.cache[product.handle] = product;
   }
+
   return product;
+}
+
+/**
+ * Get html for page, e.g. /products/fino using barba.js
+ */
+ProductJS.Utilities.getPage = function (url, callback) {
+
+  console.log("getPage", url);
+
+  if(typeof Barba === 'undefined') {
+    var error = 'You need barba.js to use this function, see http://barbajs.org/';
+    console.error(error);
+    return callback(error);
+  }
+
+  // get url from barba.js cache
+  var xhr = Barba.BaseCache.get(url);
+
+  // if no cache for url cache it!
+  if (!xhr) {
+    xhr = Barba.Utils.xhr(url);
+    Barba.BaseCache.set(url, xhr);
+  }
+
+  // https://github.com/luruke/barba.js/blob/master/src/Pjax/Pjax.js#L327
+  xhr.then(function(response) {
+    var newContainer = Barba.Pjax.Dom.parseResponse(response);
+    var $newContainer = $(newContainer);
+    var dataset = newContainer.dataset;
+    var data = ProductJS.Utilities.parseDatasetJsonStrings(dataset);
+    var currentStatus = Barba.Pjax.History.currentStatus();
+    currentStatus.namespace = Barba.Pjax.Dom.getNamespace(newContainer);
+
+    return callback(null, {
+      url: url,
+      container: newContainer,
+      $container: $newContainer,
+      dataset: dataset,
+      data: data,
+      status: currentStatus,
+    });
+  }).catch(function(error) {
+    console.error("Failed!", error);
+    callback(error);
+  });
+}
+
+/**
+ * 
+ * 
+ * 
+ * @param handle
+ */
+ProductJS.Utilities.getProduct = function (handle, callback) {
+
+  if(typeof(handle) === 'undefined'){
+    var error = new Error('handle property is required!');
+    console.error(error);
+    return callback(error);
+  }
+  
+  if(ProductJS.settings.cache === true && ProductJS.cache[handle]) {
+    // if product is cached
+    var product = ProductJS.cache[handle];
+    return callback(null, product);
+  } else {
+    var url = '/products/'+handle;
+    ProductJS.Utilities.getPage(url, function (error, result) {
+      if(error !== null) {
+        return callback(error);
+      }
+      product = ProductJS.Utilities.cacheProduct(result.data.product);
+      return callback(null, product);
+    })
+
+  }
+  return product;
+}
+
+ProductJS.Utilities.getProducts = function (products, callback) {
+  if(!async || !async.transform) {
+    var error = new Error('You need async.transform to use this function! http://caolan.github.io/async/');
+    console.error(error);
+    return callback(error);
+  }
+
+  async.transform(products, function(acc, product, index, callback) {
+    ProductJS.Utilities.getProduct(product.handle, function (error, product) {
+      if(error !== null) {
+        return callback(error);
+      }
+      acc.push(product);
+      callback(null);
+    });
+  }, function(error, products) {
+      console.log("ProductJS.Utilities.getProducts result", error, products);
+      callback(error, products);
+  });
 }
 
 /**
@@ -231,17 +358,36 @@ ProductJS.Utilities.setVariant = function (product) {
 }
 
 /**
- * Find variant by id
+ * Find variant or product by id
  * 
  * @param product
  * @param id
  * @param index - variant index
  */
-ProductJS.Utilities.findVariant = function (product, id) {
+ProductJS.Utilities.findVariant = function (products, id) {
   var index = -1;
-  for (var i = 0; i < product.variants.length; i++) {
-    var variant = product.variants[i];
+  for (var i = 0; i < products.length; i++) {
+    var variant = products[i];
     if(variant.id === id) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+/**
+ * Find variant or product by handle
+ * 
+ * @param product
+ * @param id
+ * @param index - variant index
+ */
+ProductJS.Utilities.findVariantByHandle = function(products, handle) {
+  var index = -1;
+  for (var i = 0; i < products.length; i++) {
+    var product = products[i];
+    if(product.handle === handle) {
       index = i;
       break;
     }
@@ -256,11 +402,7 @@ ProductJS.Utilities.findVariant = function (product, id) {
  * @param options.handle
  * @param cb
  */
-ProductJS.Utilities.mergeCart = function (product, options, cb) {
-  $.getJSON('/cart.js', function(cart) {
-    // console.log( "success" );
-  }).done(function(cart) {
-    // console.log( "second success", cart );
+ProductJS.Utilities.mergeCart = function (product, cart, options) {
 
     // mark all variants to "not in cart"  
     product.variantInCart = false;
@@ -272,7 +414,7 @@ ProductJS.Utilities.mergeCart = function (product, options, cb) {
     // mark found variants to "in cart"
     for (var i = 0; i < cart.items.length; i++) {
       var item = cart.items[i];
-      var index = ProductJS.Utilities.findVariant(product, item.variant_id);
+      var index = ProductJS.Utilities.findVariant(product.variants, item.variant_id);
       if(index > -1) {
         product.variants[index].quantity = item.quantity;
         product.variants[index].inCart = true;
@@ -286,16 +428,7 @@ ProductJS.Utilities.mergeCart = function (product, options, cb) {
       }
     }
     // console.log("mergeCart", product);
-    return cb(null, product);
-
-  })
-  .fail(function(jqXHR, textStatus, errorThrown) {
-    console.error(jqXHR.responseJSON.description, jqXHR.responseJSON.message);
-    return cb(jqXHR.responseJSON, product);
-  })
-  .always(function() {
-    // console.log( "complete" );
-  });
+    return product;
 }
 
 /**
@@ -337,6 +470,24 @@ ProductJS.Utilities.getVariant = function (optionValues, options, variants) {
   return variantIndex;
   
 };
+
+/**
+ * Parse jsonstrings in datasets of the .barba-container
+ * 
+ * @see theme.liquid for .barba-container  
+ */
+ProductJS.Utilities.parseDatasetJsonStrings = function (dataset) {
+  var data = {};
+  if(dataset.productJsonString) {
+    data.product = JSON.parse(dataset.productJsonString);
+    // metafields needed to be set manually, its not allawed in shopify to get all as json
+    data.product.metafields = {
+      global: JSON.parse(dataset.productMetafieldsGlobalJsonString),
+    }
+
+  }
+  return data;
+}
 
 /**
  * 

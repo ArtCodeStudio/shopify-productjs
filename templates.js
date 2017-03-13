@@ -23,7 +23,10 @@ files.forEach(file => {
 
 
         console.log(name);
-        result += `\nProductJS.templates.${name} = '${contents}';\n`;
+        result += `
+if(typeof(ProductJS.templates.${name}) !== 'string') {
+    ProductJS.templates.${name} = '${contents}';
+}`;
     }
 });
 

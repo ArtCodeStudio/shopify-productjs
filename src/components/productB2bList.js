@@ -20,19 +20,23 @@ ProductJS.Components.productB2bListCtr = function (element, data) {
   /**
    * Get cart and merge it with product and b2b cart
    */
-  ProductJS.Utilities.mergeCart(controller.product, {
-    handle: function (product, index) {
-      product = ProductJS.B2bCart.add(product, product.variants[index]);
-    }
-  }, function (error, product) {});
-
-
-  $(document).on('cart.requestComplete', function(event, cart) {
-    ProductJS.Utilities.mergeCart(controller.product, {
+  $.getJSON('/cart.js').done(function(cart) {
+    controller.product = ProductJS.Utilities.mergeCart(controller.product, cart, {
       handle: function (product, index) {
         product = ProductJS.B2bCart.add(product, product.variants[index]);
       }
-    }, function (error, product) {});
+    });
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    console.error(jqXHR.responseJSON.description, jqXHR.responseJSON.message);
+  });
+
+
+  $(document).on('cart.requestComplete', function(event, cart) {
+    controller.product = ProductJS.Utilities.mergeCart(controller.product, cart, {
+      handle: function (product, index) {
+        product = ProductJS.B2bCart.add(product, product.variants[index]);
+      }
+    });
   });
 
 

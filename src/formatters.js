@@ -136,13 +136,29 @@ rivets.formatters.size = function(a) {
 };
 
 /**
+ * Strips tabs, spaces, and newlines (all whitespace) from the left and right side of a string.
+ * @see https://help.shopify.com/themes/liquid/filters/string-filters#strip
+ */
+rivets.formatters.strip = function (str) {
+  return $.trim(str);
+}
+
+/**
+ *Converts a string into lowercase.
+ * @see https://help.shopify.com/themes/liquid/filters/string-filters#downcase
+ */
+rivets.formatters.downcase = function (str) {
+  return str.toLowerCase();
+}
+
+/**
  * Formats a string into a handle.
  * @see https://help.shopify.com/themes/liquid/filters/string-filters#handle-handleize
  */
 rivets.formatters.handleize = function (str) {
-  str = jumplink.filter.strip(str);
+  str = rivets.formatters.strip(str);
   str = str.replace(/[^\w\s]/gi, '') // http://stackoverflow.com/a/4374890
-  str = jumplink.filter.downcase(str);
+  str = rivets.formatters.downcase(str);
   return str.replace(/ /g,"-");
 }
 
@@ -183,3 +199,17 @@ rivets.formatters.contains = function(value, attr, search) {
 
   return false;
 };
+
+/**
+ * Just get the digits of a string, useful to remove px from css value
+ * 
+ * @see http://stackoverflow.com/a/1100653/1465919
+ */
+rivets.formatters.justDigits = function (str) {
+  var num = str.replace(/[^-\d\.]/g, '');
+  if(isNaN(num)) {
+    return 0;
+  } else {
+    return Number(num);
+  }
+}

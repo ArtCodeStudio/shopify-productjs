@@ -22,7 +22,7 @@ ProductJS.Components.productB2bButtonCtr = function (element, data) {
   }
 
   var onChange = function (event, object) {
-    console.log('onChange');
+    // console.log('onChange');
     var index = ProductJS.B2bCart.getItem(controller.product.b2b_cart, controller.product.variant.id);
     if(index > -1 && controller.product.variant.quantity > 0) {
       controller.showRemove = true;
