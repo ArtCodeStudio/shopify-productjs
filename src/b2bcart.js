@@ -195,7 +195,7 @@ ProductJS.B2bCart.group = function(cart) {
       });
     }
   }
-  console.log("products cart", cart);
+  // console.log("products cart", cart);
   return cart;
 }
 

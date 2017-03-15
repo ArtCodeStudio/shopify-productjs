@@ -31,34 +31,76 @@ rivets.formatters.empty = function(a) {
   return !a.length;
 };
 
+/**
+ * Adds a number to an output.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/math-filters#plus
+ */
 rivets.formatters.plus = function(a, b) {
   return parseInt(a) + parseInt(b);
 };
 
+/**
+ * Subtracts a number from an output.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/math-filters#minus
+ */
 rivets.formatters.minus = function(a, b) {
   return parseInt(a) - parseInt(b);
 };
 
+/**
+ * Multiplies an output by a number.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/math-filters#times
+ */
 rivets.formatters.times = function(a, b) {
   return a * b;
 };
 
+/**
+ * Divides an output by a number. The output is rounded down to the nearest integer.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/math-filters#divided_by
+ */
 rivets.formatters.divided_by = function(a, b) {
   return a / b;
 };
 
+/**
+ * Divides an output by a number and returns the remainder.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/math-filters#modulo
+ */
 rivets.formatters.modulo = function(a, b) {
   return a % b;
 };
 
+/**
+ * Prepends characters to a string.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/string-filters#prepend
+ */
 rivets.formatters.prepend = function(a, b) {
   return b + a;
 };
 
+/**
+ * Appends characters to a string.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/string-filters#append
+ */
 rivets.formatters.append = function(a, b) {
   return a + b;
 };
 
+/**
+ * The `slice` filter returns a substring, starting at the specified index.
+ * An optional second parameter can be passed to specify the length of the substring.
+ * If no second parameter is given, a substring of one character will be returned.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/string-filters#slice
+ */
 rivets.formatters.slice = function(value, start, end) {
   return value.slice(start, end);
 };
@@ -111,6 +153,11 @@ rivets.formatters.weight = function(grams) {
   }
 };
 
+/**
+ * Formats the product variant's weight. The weight unit is set in General Settings.
+ * 
+ * @see https://help.shopify.com/themes/liquid/filters/additional-filters#weight_with_unit
+ */
 rivets.formatters.weight_with_unit = function(grams) {
   return rivets.formatters.weight(grams) + CartJS.settings.weightUnit;
 };
@@ -144,7 +191,15 @@ rivets.formatters.strip = function (str) {
 }
 
 /**
- *Converts a string into lowercase.
+ * Converts a string into uppercase.
+ * @see https://help.shopify.com/themes/liquid/filters/string-filters#upcase
+ */
+rivets.formatters.upcase = function (str) {
+  return str.toUpperCase();
+}
+
+/**
+ * Converts a string into lowercase.
  * @see https://help.shopify.com/themes/liquid/filters/string-filters#downcase
  */
 rivets.formatters.downcase = function (str) {
@@ -213,3 +268,16 @@ rivets.formatters.justDigits = function (str) {
     return Number(num);
   }
 }
+
+/**
+ * Returns true if value index it the last index of the array. Returns false if it is not the last index.
+ * 
+ * ```
+ *  <div rv-each-image="product.images" rv-hide="product.images | last %image%"></div>
+ * ```
+ * 
+ * @see https://help.shopify.com/themes/liquid/objects/for-loops#forloop-last
+ */
+rivets.formatters.last = function(array, index) {
+  return (array.length === index + 1);
+};
