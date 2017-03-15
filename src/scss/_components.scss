@@ -1,17 +1,11 @@
 product-variant-dropdowns {
-    &.align-items-stretch {
-        .dropdown, product-quantity-button {
-            flex: 1;
-        }
+    .dropdown, product-quantity-button {
+
     }
 
 }
 
 // use flexbox for tables to make the table reverseable
 product-b2b-list {
-    tr.align-items-stretch {
-        th, td {
-            flex: 1;
-        }
-    }
+
 }

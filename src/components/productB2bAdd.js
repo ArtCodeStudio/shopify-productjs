@@ -19,6 +19,12 @@ ProductJS.Components.productB2bAddCtr = function (element, data) {
   controller.addLabel = data.addLabel;
   controller.updateLabel = data.updateLabel;
 
+  controller.addUpdateButtonClass = 'btn btn-primary w-100'; // default
+
+  if(data.addUpdateButtonClass) {
+    controller.addUpdateButtonClass = data.addUpdateButtonClass;
+  }
+
   // console.log("CartJS.cart", CartJS.cart);
 
   controller.addListToCart = function () {

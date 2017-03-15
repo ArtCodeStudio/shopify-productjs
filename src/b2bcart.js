@@ -201,7 +201,6 @@ ProductJS.B2bCart.group = function(cart) {
 
 ProductJS.B2bCart.loadCart = function(cart) {
   $(document).trigger('b2bcart.bind.befor');
-  console.log("loadCart", cart);
   cart = ProductJS.B2bCart.group(cart);
   ProductJS.Utilities.getProducts(cart.products, function (error, products) {
     cart.products = products;

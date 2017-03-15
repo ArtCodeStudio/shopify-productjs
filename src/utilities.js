@@ -199,7 +199,7 @@ ProductJS.Utilities.cacheProduct = function (product) {
   
   if(ProductJS.cache[product.handle]) {
     // if product is cached
-    console.log("product is cached", ProductJS.cache[product.handle]);
+    // console.log("product is cached", ProductJS.cache[product.handle]);
     return ProductJS.cache[product.handle];
   } else {
     product = ProductJS.Utilities.setVariant(ProductJS.Utilities.splitOptions(product));
@@ -214,7 +214,7 @@ ProductJS.Utilities.cacheProduct = function (product) {
  */
 ProductJS.Utilities.getPage = function (url, callback) {
 
-  console.log("getPage", url);
+  // console.log("getPage", url);
 
   if(typeof Barba === 'undefined') {
     var error = 'You need barba.js to use this function, see http://barbajs.org/';
@@ -302,7 +302,7 @@ ProductJS.Utilities.getProducts = function (products, callback) {
       callback(null);
     });
   }, function(error, products) {
-      console.log("ProductJS.Utilities.getProducts result", error, products);
+      // console.log("ProductJS.Utilities.getProducts result", error, products);
       callback(error, products);
   });
 }
