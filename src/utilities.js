@@ -302,7 +302,7 @@ ProductJS.Utilities.getProducts = function (products, callback) {
       callback(null);
     });
   }, function(error, products) {
-      // console.log("ProductJS.Utilities.getProducts result", error, products);
+      console.log("ProductJS.Utilities.getProducts result", error, products);
       callback(error, products);
   });
 }
@@ -399,8 +399,8 @@ ProductJS.Utilities.findVariantByHandle = function(products, handle) {
  * Find variants that are already in the shopify cart
  * 
  * @param product
+ * @param cart
  * @param options.handle
- * @param cb
  */
 ProductJS.Utilities.mergeCart = function (product, cart, options) {
 

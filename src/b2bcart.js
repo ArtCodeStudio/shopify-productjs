@@ -199,12 +199,54 @@ ProductJS.B2bCart.group = function(cart) {
   return cart;
 }
 
+/**
+ * Find variants for each product that are already in the b2b grouped cart
+ * 
+ * @param product
+ * @param cart
+ * @param options.handle
+ * 
+ * @see ProductJS.Utilities.mergeCart 
+ */
+ProductJS.B2bCart.mergeCart = function (b2bCard, newCart, options) {
+
+  console.log("mergeCart");
+  console.log("b2bCard", b2bCard);
+  console.log("newCart", newCart);
+  console.log("options", options);
+
+  b2bCard.attributes = newCart.attributes;
+  b2bCard.item_count = newCart.item_count;
+  b2bCard.items = newCart.items;
+  b2bCard.note = newCart.note;
+  b2bCard.original_total_price = newCart.original_total_price;
+  // b2bCard.products = newCart.products;
+  b2bCard.requires_shipping = newCart.requires_shipping;
+  b2bCard.token = newCart.token;
+  b2bCard.total_discount = newCart.total_discount;
+  b2bCard.total_price = newCart.total_price;
+  b2bCard.total_weight = newCart.total_weight;
+
+  for (var i = 0; i < b2bCard.products.length; i++) {
+    var product = b2bCard.products[i];
+    product = ProductJS.Utilities.mergeCart(product, newCart, options);
+  }
+
+  return b2bCard;
+}
+
 ProductJS.B2bCart.loadCart = function(cart) {
   $(document).trigger('b2bcart.bind.befor');
-  cart = ProductJS.B2bCart.group(cart);
-  ProductJS.Utilities.getProducts(cart.products, function (error, products) {
-    cart.products = products;
-    rivets.bind($('#cart'), {cart: cart, settings: ProductJS.settings});
+  b2bCard = ProductJS.B2bCart.group(cart);
+
+  $(document).on('cart.requestComplete', function(event, newCart) {
+    b2bCard = ProductJS.B2bCart.mergeCart(b2bCard, newCart, {});
+  });
+
+  // load all products via pajax
+  ProductJS.Utilities.getProducts(b2bCard.products, function (error, products) {
+    b2bCard.products = products;    
+    rivets.bind($('#cart'), {cart: b2bCard, settings: ProductJS.settings});
     $(document).trigger('b2bcart.bind.after');
   });
 }
