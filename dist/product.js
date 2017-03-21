@@ -408,12 +408,14 @@ ProductJS.B2bCart.updateCart = function(product) {
         CartJS.updateItemQuantitiesById(updates, {
             success: function(data, textStatus, jqXHR) {
                 console.log("success updates", data);
+                alertify.success(window.translations.cart.general.updated);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
                 console.error(jqXHR.responseJSON.message);
                 console.error(jqXHR.responseJSON.description);
                 console.error(jqXHR.responseJSON.status);
+                alertify.error(jqXHR.responseJSON.description);
             }
         });
     }
@@ -421,12 +423,11 @@ ProductJS.B2bCart.updateCart = function(product) {
         CartJS.updateItemQuantitiesById(removes, {
             success: function(data, textStatus, jqXHR) {
                 console.log("success removes", data);
+                alertify.success(window.translations.cart.general.removed);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
-                console.error(jqXHR.responseJSON.message);
-                console.error(jqXHR.responseJSON.description);
-                console.error(jqXHR.responseJSON.status);
+                alertify.error(jqXHR.responseJSON.description);
             }
         });
     }
@@ -435,12 +436,11 @@ ProductJS.B2bCart.updateCart = function(product) {
         CartJS.addItem(variant.id, variant.quantity, properties, {
             success: function(data, textStatus, jqXHR) {
                 console.log("success add", data);
+                alertify.success(window.translations.cart.general.added.replace("[title]", data.product_title));
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.error(jqXHR, textStatus, errorThrown);
-                console.error(jqXHR.responseJSON.message);
-                console.error(jqXHR.responseJSON.description);
-                console.error(jqXHR.responseJSON.status);
+                alertify.error(jqXHR.responseJSON.description);
             }
         });
     }
@@ -704,6 +704,22 @@ rivets.formatters.justDigits = function(str) {
 
 rivets.formatters.last = function(array, index) {
     return array.length === index + 1;
+};
+
+rivets.formatters.get = function(obj, key) {
+    if (obj && typeof obj === "object") {
+        return obj[key];
+    }
+    return null;
+};
+
+rivets.formatters["."] = rivets.formatters.get;
+
+rivets.formatters.set = function(obj, key, value) {
+    if (obj && typeof obj === "object") {
+        obj[key] = value;
+    }
+    return obj;
 };
 
 if (typeof ProductJS !== "object") {

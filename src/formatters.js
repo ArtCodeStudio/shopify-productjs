@@ -3,6 +3,8 @@
  * Formatters from cart.js
  * @see https://github.com/discolabs/cartjs/blob/master/src/rivets.coffee#L52
  */
+
+
 rivets.formatters.eq = function(a, b) {
   return a === b;
 };
@@ -226,7 +228,7 @@ rivets.formatters.default = function(value, args) {
 };
 
 /**
- * 
+ * True if array contains property or containts property with value
  * @see https://gist.github.com/der-On/cdafe908847e2b882691
  */
 rivets.formatters.contains = function(value, attr, search) {
@@ -280,4 +282,28 @@ rivets.formatters.justDigits = function (str) {
  */
 rivets.formatters.last = function(array, index) {
   return (array.length === index + 1);
+};
+
+/**
+ * Get property of object
+ * @see https://gist.github.com/der-On/cdafe908847e2b882691
+ */
+rivets.formatters.get = function(obj, key) {
+  if (obj && typeof obj === 'object') {
+    return obj[key];
+  }
+  return null;
+};
+rivets.formatters['.'] = rivets.formatters.get;
+
+/**
+ * Set property of object
+ * @see https://gist.github.com/der-On/cdafe908847e2b882691
+ */
+rivets.formatters.set = function(obj, key, value) {
+  if (obj && typeof obj === 'object') {
+    obj[key] = value;
+  }
+
+  return obj;
 };
