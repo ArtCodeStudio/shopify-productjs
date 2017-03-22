@@ -517,6 +517,24 @@ rivets.binders.hide = function(el, value) {
     }
 };
 
+rivets.binders["d-block"] = function(el, value) {
+    var $element = $(el);
+    if (value) {
+        $element.attr("style", "display: block !important");
+    } else {
+        $element.attr("style", "");
+    }
+};
+
+rivets.binders["d-flex"] = function(el, value) {
+    var $element = $(el);
+    if (value) {
+        $element.attr("style", "display: flex !important");
+    } else {
+        $element.attr("style", "");
+    }
+};
+
 rivets.binders["background-image"] = function(el, value) {
     var $element = $(el);
     $element.css("background-image", "url(" + value + ")");
