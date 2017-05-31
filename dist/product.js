@@ -777,7 +777,7 @@ if (typeof ProductJS.templates.productQuantityButton !== "string") {
 }
 
 if (typeof ProductJS.templates.productVariantDropdowns !== "string") {
-    ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-hide="product.variants | size | lt 2" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><div class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option">{ option }</div></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="start" min="0" decrease="10" increase="10"></product-quantity-button>';
+    ProductJS.templates.productVariantDropdowns = '<div class="dropdown" rv-hide="product.variants | size | lt 2" rv-each-select="product.selectOptions" rv-data-index="%select%" rv-data-title="select.title"><button rv-id="select.title | handleize | append \'-dropdown-toggle\'" rv-class="dropdownButtonClass | append \' btn btn-secondary dropdown-toggle\'" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{ select.select }</button><div rv-class="select.title | handleize | append \' dropdown-menu\'" rv-aria-labelledby="select.title | handleize | append \'-dropdown-toggle\'"><h6 class="dropdown-header">{ select.title }</h6><div class="dropdown-item" rv-on-click="onOptionClick" rv-each-option="select.values" rv-data-index="%option%" rv-data-value="option">{ option }</div></div></div><product-quantity-button rv-if="showQuantityButton" product="product" start="start" min="min" decrease="decrease" increase="increase"></product-quantity-button>';
 }
 
 if (typeof ProductJS.templates.productVariantSelectors !== "string") {
@@ -1091,6 +1091,7 @@ ProductJS.Components.productQuantityButtonCtr = function(element, data) {
     controller.product = data.product;
     controller.$element = $(element);
     controller.$input = controller.$element.find("input");
+    controller.start = Number(data.start);
     controller.decrease = Number(data.decrease);
     controller.increase = Number(data.increase);
     controller.min = data.min;
@@ -1157,9 +1158,21 @@ ProductJS.Components.productVariantDropdownsCtr = function(element, data) {
     var controller = this;
     controller.product = data.product;
     controller.showQuantityButton = data.showQuantityButton === true;
-    controller.start = data.startQuantity;
+    controller.start = Number(data.startQuantity);
     if (typeof controller.start !== "number") {
         controller.start = window.ProductJS.settings.quantity;
+    }
+    controller.min = Number(data.minQuantity);
+    if (typeof controller.min !== "number") {
+        controller.min = 0;
+    }
+    controller.decrease = Number(data.decreaseQuantity);
+    if (typeof controller.decrease !== "number") {
+        controller.decrease = 10;
+    }
+    controller.increase = Number(data.increaseQuantity);
+    if (typeof controller.increase !== "number") {
+        controller.increase = 10;
     }
     if (data.dropdownButtonClass) {
         controller.dropdownButtonClass = data.dropdownButtonClass;

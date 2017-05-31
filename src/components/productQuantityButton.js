@@ -16,6 +16,7 @@ ProductJS.Components.productQuantityButtonCtr = function (element, data) {
   controller.product = data.product;
   controller.$element = $(element);
   controller.$input = controller.$element.find('input');
+  controller.start = Number(data.start);
   controller.decrease = Number(data.decrease);
   controller.increase = Number(data.increase);
   controller.min = data.min;

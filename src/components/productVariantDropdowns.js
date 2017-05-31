@@ -16,13 +16,28 @@ ProductJS.Components.productVariantDropdownsCtr = function (element, data) {
   controller.product = data.product;
   controller.showQuantityButton = (data.showQuantityButton === true)
 
-  controller.start = data.startQuantity;
+  controller.start = Number(data.startQuantity);
   if(typeof controller.start !== 'number') {
     controller.start = window.ProductJS.settings.quantity;
   }
 
+  controller.min = Number(data.minQuantity);
+  if(typeof controller.min !== 'number') {
+    controller.min = 0;
+  }
+
+  controller.decrease = Number(data.decreaseQuantity);
+  if(typeof controller.decrease !== 'number') {
+    controller.decrease = 10;
+  }
+
+  controller.increase = Number(data.increaseQuantity);
+  if(typeof controller.increase !== 'number') {
+    controller.increase = 10;
+  }
+
   if(data.dropdownButtonClass) {
-      controller.dropdownButtonClass = data.dropdownButtonClass;
+    controller.dropdownButtonClass = data.dropdownButtonClass;
   }
   
   // controller.options = data.product.options;
