@@ -17,7 +17,7 @@ ProductJS.Components.productCtr = function (element, data) {
   controller = ProductJS.Utilities.extend(controller, data)
   controller.$element = $(element);
 
-  // console.log("productCtr", controller, data);
+  console.log("productCtr", controller, data);
 }
 
 rivets.components['product'] = {

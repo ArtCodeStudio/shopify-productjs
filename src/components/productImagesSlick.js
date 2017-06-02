@@ -20,16 +20,30 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
     controller.slickID = 'product-images-slick-'+controller.product.handle;
     controller.slickSelector = '#'+controller.slickID;
     controller.imageColClass = 'col-xs-12';
-  
 
     /**
      * If hasColorcard is true the last image of the product images is markt as the colorcard
+     * metafield namespace: c_f
+     * metafield key: jumplink_enable_colorcard
+     * value: Enable the Colorcard for this Product; 0: Colorcard is off; 1: Colorcard is on; default: Colorcard is on [p][_i]
      * 
-     * @default: false
+     * @default: true
      */
-    controller.hasColorcard = false;
-    if(typeof(data.hasColorcard) !== 'undefined') {
-      controller.hasColorcard = (data.hasColorcard === true || data.hasColorcard === 'true');
+    controller.hasColorcard = true;
+    if(controller.product.metafields.c_f.jumplink_enable_colorcard === '0') {
+      controller.hasColorcard = false;
+    }
+    console.log('hasColorcard', controller.hasColorcard);
+
+    controller.withFullscreenModal = false;
+    if(data.withFullscreenModal === true || data.withFullscreenModal === 'true') {
+      controller.withFullscreenModal = true;
+    }
+    console.log('withFullscreenModal', controller.withFullscreenModal, data.withFullscreenModal);
+
+    controller.waitForB2bcart = false;
+    if(data.waitForB2bcart === true || data.waitForB2bcart === 'true') {
+      controller.waitForB2bcart = true;
     }
 
     /**
@@ -41,7 +55,6 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
     if(typeof(data.showThums) !== 'undefined') {
       controller.showThums = (data.showThums === true || data.showThums === 'true');
     }
-
 
     if(controller.showThums) {
       controller.slickThumsID = 'product-thumbs-'+controller.product.handle;
@@ -55,14 +68,68 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
       arrows: false,
     }
 
-    $(document).on('b2bcart.bind.after', function(event) {
+    var initModal = function (product, $slick) {
+      // init product photo modal
+      var $modal = $('#product-photo-modal-'+product.handle);
+      $modal.$slick = $modal.find('.slick-slider');
 
+      var onModalSlickChanges = function(event, slickModal, slickModalCurrentSlide) {
+        var currentSlide = $slick.slick('slickCurrentSlide')
+        if( currentSlide !== slickModalCurrentSlide) {
+          $slick.slick('slickGoTo', slickModalCurrentSlide, true);
+        }
+        var newSlide = $slick.slick('slickCurrentSlide')
+      };
+
+      $modal.on('show.bs.modal', function (e) {
+        $this = $(this);
+        
+        // init modal slick
+        if(!$modal.$slick.hasClass('slick-initialized')) {
+          // init slick
+          $modal.$slick.slick({
+            dots: false,
+            // variableWidth: true,
+            // centerMode: true,
+            // centerPadding: 0,
+            // appendArrows: $(productHandle+' .product-photo-carousel-arrows'),
+            initialSlide: $slick.slick('slickCurrentSlide'),
+          });
+        } else {
+          if( $slick.slick('slickCurrentSlide') !==  $modal.$slick.slick('slickCurrentSlide')) {
+            $modal.$slick.slick('slickGoTo', $slick.slick('slickCurrentSlide'), true);
+          }
+        }
+
+      });
+
+      $modal.on('shown.bs.modal', function (e) {
+        $modal.$slick.slick('setPosition');
+      });
+
+      // destory bindings on modal hides
+      $modal.on('hide.bs.modal', function (e) {
+        $modal.$slick.unbind('afterChange', onModalSlickChanges);
+
+        if( $modal.$slick.hasClass('slick-initialized')) {
+          $modal.$slick.slick('unslick'); // WORAROUND until gotoslide bug is fixed
+        }
+      });
+
+      $modal.on('hiden.bs.modal', function (e) {
+
+      });
+    }
+
+    initSlick = function () {
       var $slick = $(controller.slickSelector);
       var $slickThums = $(controller.slickThumsSelector);
 
+      console.log("initSlick", $slick );
+
       var $modal = $('#cart-modal');
       $modal.on('shown.bs.modal', function (e) {
-        $slick.slick('setPosition');
+        $slick.slick('setPosition', controller.product.images);
       });
 
       // console.log("slick", $slick, $slickThums);
@@ -70,11 +137,11 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
       if(!$slick.hasClass('slick-initialized')) {
         // init slick
         $slick.slick(slickOptions);
-
-        if(controller.hasColorcard && controller.product.images.length > 0) {
-           $slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index
+        if(controller.hasColorcard) {
+          console.log("remove last image");
+          $slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index, this is the colorcard
+          $slickThums.last().hide(); // hide colorcard thumb
         }
-       
 
         // set slick thumb click actions
         if(controller.showThums) {
@@ -88,7 +155,17 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
         }
       }
 
-    });
+      if(controller.withFullscreenModal) {
+        initModal(controller.product, $slick);
+      }
+    };
+
+    if(controller.waitForB2bcart === true ) {
+      $(document).on('b2bcart.bind.after', initSlick);
+    } else {
+      $(document).on('product.bind.after', initSlick);
+      initSlick();
+    }
 
     // console.log("productImagesSlickCtr", controller);
   }

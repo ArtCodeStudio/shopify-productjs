@@ -482,7 +482,7 @@ ProductJS.Utilities.parseDatasetJsonStrings = function (dataset) {
     data.product = JSON.parse(dataset.productJsonString);
     // metafields needed to be set manually, its not allawed in shopify to get all as json
     data.product.metafields = {
-      global: JSON.parse(dataset.productMetafieldsGlobalJsonString),
+      c_f: JSON.parse(dataset.productMetafieldsCustomFieldsJsonString),
     }
 
   }

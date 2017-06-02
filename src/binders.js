@@ -17,6 +17,23 @@ rivets.binders.hide = function(el, value) {
 };
 
 /**
+ * Disable element
+ * 
+ * ```
+ * <section rv-disable="feature.disabled"></section>
+ * ```
+ */
+rivets.binders.disable = function(el, value) {
+  var $element = $(el);
+  if(value) {
+    $element.attr('disabled', 'disabled').prop('disabled', true);
+  } else {
+    $element.removeAttr('disabled').prop('disabled', false);
+  }
+};
+
+
+/**
  * Set style to `display: block !important` of element when the value evaluates to true and remove style of element when the value evaluates to false.
  * 
  * ```

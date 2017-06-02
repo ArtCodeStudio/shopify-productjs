@@ -308,7 +308,7 @@ ProductJS.Utilities.parseDatasetJsonStrings = function(dataset) {
     if (dataset.productJsonString) {
         data.product = JSON.parse(dataset.productJsonString);
         data.product.metafields = {
-            global: JSON.parse(dataset.productMetafieldsGlobalJsonString)
+            c_f: JSON.parse(dataset.productMetafieldsCustomFieldsJsonString)
         };
     }
     return data;
@@ -514,6 +514,15 @@ rivets.binders.hide = function(el, value) {
         $element.attr("style", "display: none !important");
     } else {
         $element.attr("style", "");
+    }
+};
+
+rivets.binders.disable = function(el, value) {
+    var $element = $(el);
+    if (value) {
+        $element.attr("disabled", "disabled").prop("disabled", true);
+    } else {
+        $element.removeAttr("disabled").prop("disabled", false);
     }
 };
 
@@ -828,6 +837,7 @@ ProductJS.Components.productCtr = function(element, data) {
     var controller = this;
     controller = ProductJS.Utilities.extend(controller, data);
     controller.$element = $(element);
+    console.log("productCtr", controller, data);
 };
 
 rivets.components["product"] = {
@@ -1022,9 +1032,19 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
         controller.slickID = "product-images-slick-" + controller.product.handle;
         controller.slickSelector = "#" + controller.slickID;
         controller.imageColClass = "col-xs-12";
-        controller.hasColorcard = false;
-        if (typeof data.hasColorcard !== "undefined") {
-            controller.hasColorcard = data.hasColorcard === true || data.hasColorcard === "true";
+        controller.hasColorcard = true;
+        if (controller.product.metafields.c_f.jumplink_enable_colorcard === "0") {
+            controller.hasColorcard = false;
+        }
+        console.log("hasColorcard", controller.hasColorcard);
+        controller.withFullscreenModal = false;
+        if (data.withFullscreenModal === true || data.withFullscreenModal === "true") {
+            controller.withFullscreenModal = true;
+        }
+        console.log("withFullscreenModal", controller.withFullscreenModal, data.withFullscreenModal);
+        controller.waitForB2bcart = false;
+        if (data.waitForB2bcart === true || data.waitForB2bcart === "true") {
+            controller.waitForB2bcart = true;
         }
         controller.showThums = true;
         if (typeof data.showThums !== "undefined") {
@@ -1040,17 +1060,54 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
             dots: false,
             arrows: false
         };
-        $(document).on("b2bcart.bind.after", function(event) {
+        var initModal = function(product, $slick) {
+            var $modal = $("#product-photo-modal-" + product.handle);
+            $modal.$slick = $modal.find(".slick-slider");
+            var onModalSlickChanges = function(event, slickModal, slickModalCurrentSlide) {
+                var currentSlide = $slick.slick("slickCurrentSlide");
+                if (currentSlide !== slickModalCurrentSlide) {
+                    $slick.slick("slickGoTo", slickModalCurrentSlide, true);
+                }
+                var newSlide = $slick.slick("slickCurrentSlide");
+            };
+            $modal.on("show.bs.modal", function(e) {
+                $this = $(this);
+                if (!$modal.$slick.hasClass("slick-initialized")) {
+                    $modal.$slick.slick({
+                        dots: false,
+                        initialSlide: $slick.slick("slickCurrentSlide")
+                    });
+                } else {
+                    if ($slick.slick("slickCurrentSlide") !== $modal.$slick.slick("slickCurrentSlide")) {
+                        $modal.$slick.slick("slickGoTo", $slick.slick("slickCurrentSlide"), true);
+                    }
+                }
+            });
+            $modal.on("shown.bs.modal", function(e) {
+                $modal.$slick.slick("setPosition");
+            });
+            $modal.on("hide.bs.modal", function(e) {
+                $modal.$slick.unbind("afterChange", onModalSlickChanges);
+                if ($modal.$slick.hasClass("slick-initialized")) {
+                    $modal.$slick.slick("unslick");
+                }
+            });
+            $modal.on("hiden.bs.modal", function(e) {});
+        };
+        initSlick = function() {
             var $slick = $(controller.slickSelector);
             var $slickThums = $(controller.slickThumsSelector);
+            console.log("initSlick", $slick);
             var $modal = $("#cart-modal");
             $modal.on("shown.bs.modal", function(e) {
-                $slick.slick("setPosition");
+                $slick.slick("setPosition", controller.product.images);
             });
             if (!$slick.hasClass("slick-initialized")) {
                 $slick.slick(slickOptions);
-                if (controller.hasColorcard && controller.product.images.length > 0) {
+                if (controller.hasColorcard) {
+                    console.log("remove last image");
                     $slick.slick("slickRemove", controller.product.images.length - 1, false);
+                    $slickThums.last().hide();
                 }
                 if (controller.showThums) {
                     $slickThums.each(function(index, value) {
@@ -1062,7 +1119,16 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
                     });
                 }
             }
-        });
+            if (controller.withFullscreenModal) {
+                initModal(controller.product, $slick);
+            }
+        };
+        if (controller.waitForB2bcart === true) {
+            $(document).on("b2bcart.bind.after", initSlick);
+        } else {
+            $(document).on("product.bind.after", initSlick);
+            initSlick();
+        }
     };
 }
 
