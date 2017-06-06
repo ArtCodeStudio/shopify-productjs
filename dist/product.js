@@ -307,8 +307,10 @@ ProductJS.Utilities.parseDatasetJsonStrings = function(dataset) {
     var data = {};
     if (dataset.productJsonString) {
         data.product = JSON.parse(dataset.productJsonString);
+        data.product.url = dataset.productUrl;
         data.product.metafields = {
-            c_f: JSON.parse(dataset.productMetafieldsCustomFieldsJsonString)
+            c_f: JSON.parse(dataset.productMetafieldsCustomFieldsJsonString),
+            spr: JSON.parse(dataset.productMetafieldsSprJsonString)
         };
     }
     return data;
@@ -781,6 +783,10 @@ if (typeof ProductJS.templates.productImagesSlick !== "string") {
     ProductJS.templates.productImagesSlick = '<h1 rv-on-click="onClick">{product.title}</h1>';
 }
 
+if (typeof ProductJS.templates.productPhotoModal !== "string") {
+    ProductJS.templates.productPhotoModal = '<h1 rv-on-click="onClick">{product.title}</h1>';
+}
+
 if (typeof ProductJS.templates.productQuantityButton !== "string") {
     ProductJS.templates.productQuantityButton = '<div class="input-group group-quantity-actions" role="group" aria-label="Adjust the quantity"><span class="input-group-btn"><button rv-on-click="onClickDecrease" type="button" class="btn btn-secondary">&minus;</button> </span><input rv-on-change="onValueChange" rv-value="product.variant.quantity | default start" type="text" name="quantity" class="form-control" min="0" aria-label="quantity" pattern="[0-9]*"> <span class="input-group-btn"><button rv-on-click="onClickIncrease" type="button" class="btn btn-secondary border-left-0">+</button></span></div>';
 }
@@ -837,6 +843,7 @@ ProductJS.Components.productCtr = function(element, data) {
     var controller = this;
     controller = ProductJS.Utilities.extend(controller, data);
     controller.$element = $(element);
+    controller.shopifyProductReviewsID = "shopify-product-reviews-" + product.handle;
     console.log("productCtr", controller, data);
 };
 
@@ -1029,22 +1036,42 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
         var controller = this;
         controller.product = data.product;
         controller.$element = $(element);
-        controller.slickID = "product-images-slick-" + controller.product.handle;
+        controller.inB2bcart = false;
+        if (data.inB2bcart === true || data.inB2bcart === "true") {
+            controller.inB2bcart = true;
+        }
+        if (controller.inB2bcart) {
+            controller.slickID = "cart-product-images-slick-" + controller.product.handle;
+            controller.modalID = "cart-product-photo-modal-" + controller.product.handle;
+        } else {
+            controller.slickID = "product-images-slick-" + controller.product.handle;
+            controller.modalID = "product-photo-modal-" + controller.product.handle;
+        }
         controller.slickSelector = "#" + controller.slickID;
+        controller.modalSelector = "#" + controller.modalID;
         controller.imageColClass = "col-xs-12";
+        controller.sync = false;
+        controller.syncTarget = null;
+        if (data.sync === true && data.syncTarget) {
+            controller.sync = true;
+            if (controller.inB2bcart) {
+                controller.syncTarget = data.syncTarget || "product-photo-modal-" + controller.product.handle;
+            } else {
+                controller.syncTarget = data.syncTarget || "cart-product-photo-modal-" + controller.product.handle;
+            }
+        }
         controller.hasColorcard = true;
         if (controller.product.metafields.c_f.jumplink_enable_colorcard === "0") {
             controller.hasColorcard = false;
         }
-        console.log("hasColorcard", controller.hasColorcard);
         controller.withFullscreenModal = false;
-        if (data.withFullscreenModal === true || data.withFullscreenModal === "true") {
+        if (data.withFullscreenModal === true) {
             controller.withFullscreenModal = true;
         }
-        console.log("withFullscreenModal", controller.withFullscreenModal, data.withFullscreenModal);
-        controller.waitForB2bcart = false;
-        if (data.waitForB2bcart === true || data.waitForB2bcart === "true") {
-            controller.waitForB2bcart = true;
+        controller.hasParentModal = false;
+        if (data.hasParentModal === true) {
+            controller.hasParentModal = true;
+            controller.$parentModal = $(data.parentModalTarget);
         }
         controller.showThums = true;
         if (typeof data.showThums !== "undefined") {
@@ -1056,58 +1083,27 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
             controller.thumColClass = "hidden-sm-down col-sm-2";
             controller.imageColClass = "col-xs-12 col-sm-10";
         }
-        var slickOptions = {
-            dots: false,
-            arrows: false
-        };
-        var initModal = function(product, $slick) {
-            var $modal = $("#product-photo-modal-" + product.handle);
-            $modal.$slick = $modal.find(".slick-slider");
-            var onModalSlickChanges = function(event, slickModal, slickModalCurrentSlide) {
-                var currentSlide = $slick.slick("slickCurrentSlide");
-                if (currentSlide !== slickModalCurrentSlide) {
-                    $slick.slick("slickGoTo", slickModalCurrentSlide, true);
-                }
-                var newSlide = $slick.slick("slickCurrentSlide");
-            };
-            $modal.on("show.bs.modal", function(e) {
-                $this = $(this);
-                if (!$modal.$slick.hasClass("slick-initialized")) {
-                    $modal.$slick.slick({
-                        dots: false,
-                        initialSlide: $slick.slick("slickCurrentSlide")
-                    });
-                } else {
-                    if ($slick.slick("slickCurrentSlide") !== $modal.$slick.slick("slickCurrentSlide")) {
-                        $modal.$slick.slick("slickGoTo", $slick.slick("slickCurrentSlide"), true);
-                    }
-                }
-            });
-            $modal.on("shown.bs.modal", function(e) {
-                $modal.$slick.slick("setPosition");
-            });
-            $modal.on("hide.bs.modal", function(e) {
-                $modal.$slick.unbind("afterChange", onModalSlickChanges);
-                if ($modal.$slick.hasClass("slick-initialized")) {
-                    $modal.$slick.slick("unslick");
-                }
-            });
-            $modal.on("hiden.bs.modal", function(e) {});
-        };
         initSlick = function() {
             var $slick = $(controller.slickSelector);
             var $slickThums = $(controller.slickThumsSelector);
-            console.log("initSlick", $slick);
-            var $modal = $("#cart-modal");
-            $modal.on("shown.bs.modal", function(e) {
-                $slick.slick("setPosition", controller.product.images);
-            });
+            var slickOptions = {
+                dots: false,
+                arrows: false
+            };
+            if (controller.sync) {
+                options.asNavFor = controller.syncTarget;
+            }
             if (!$slick.hasClass("slick-initialized")) {
                 $slick.slick(slickOptions);
                 if (controller.hasColorcard) {
-                    console.log("remove last image");
                     $slick.slick("slickRemove", controller.product.images.length - 1, false);
                     $slickThums.last().hide();
+                }
+                if (controller.hasParentModal) {
+                    controller.$parentModal.on("shown.bs.modal", function(e) {
+                        console.log("productImagesSlickCtr shown.bs.modal", controller.$parentModal);
+                        $slick.slick("setPosition");
+                    });
                 }
                 if (controller.showThums) {
                     $slickThums.each(function(index, value) {
@@ -1119,15 +1115,12 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
                     });
                 }
             }
-            if (controller.withFullscreenModal) {
-                initModal(controller.product, $slick);
-            }
+            if (controller.withFullscreenModal) {}
         };
-        if (controller.waitForB2bcart === true) {
+        if (controller.inB2bcart === true) {
             $(document).on("b2bcart.bind.after", initSlick);
         } else {
             $(document).on("product.bind.after", initSlick);
-            initSlick();
         }
     };
 }
@@ -1141,6 +1134,88 @@ rivets.components["product-images-slick"] = {
             console.error(new Error("product attribute is required"));
         }
         return new ProductJS.Components.productImagesSlickCtr(el, data);
+    }
+};
+
+if (typeof ProductJS !== "object") {
+    var ProductJS = {};
+}
+
+if (typeof ProductJS.Components !== "object") {
+    ProductJS.Components = {};
+}
+
+if (!ProductJS.Utilities.isFunction(ProductJS.Components.productPhotoModalCtr)) {
+    ProductJS.Components.productPhotoModalCtr = function(element, data) {
+        var controller = this;
+        controller.product = data.product;
+        controller.$element = $(element);
+        controller.inB2bcart = false;
+        if (data.inB2bcart === true) {
+            controller.inB2bcart = true;
+        }
+        if (controller.inB2bcart) {
+            controller.modalID = data.modalID || "cart-product-photo-modal-" + controller.product.handle;
+        } else {
+            controller.modalID = data.modalID || "product-photo-modal-" + controller.product.handle;
+        }
+        controller.modalSelector = "#" + controller.modalID;
+        controller.slickSelector = controller.modalSelector + " .slick-slider";
+        controller.sync = false;
+        controller.syncTarget = null;
+        if (data.sync === true && data.syncTarget) {
+            controller.sync = true;
+            controller.syncTarget = data.syncTarget;
+        }
+        controller.hasColorcard = true;
+        if (controller.product.metafields.c_f.jumplink_enable_colorcard === "0") {
+            controller.hasColorcard = false;
+        }
+        var initModal = function() {
+            var $modal = $(controller.modalSelector);
+            var $syncSlick = $(controller.syncTarget);
+            $modal.$slick = $modal.find(".slick-slider");
+            $modal.on("show.bs.modal", function(e) {
+                $this = $(this);
+                if (!$modal.$slick.hasClass("slick-initialized")) {
+                    var options = {
+                        dots: false
+                    };
+                    if (controller.sync) {
+                        options.asNavFor = controller.syncTarget;
+                    }
+                    console.log("productPhotoModalCtr init slick", options);
+                    $modal.$slick.slick(options);
+                    if (controller.hasColorcard) {
+                        $modal.$slick.slick("slickRemove", controller.product.images.length - 1, false);
+                    }
+                }
+                $modal.$slick.slick("slickGoTo", $syncSlick.slick("slickCurrentSlide"), true);
+            });
+            $modal.on("shown.bs.modal", function(e) {
+                $modal.$slick.slick("setPosition");
+            });
+            $modal.on("hide.bs.modal", function(e) {});
+            $modal.on("hiden.bs.modal", function(e) {});
+        };
+        if (controller.inB2bcart === true) {
+            $(document).on("b2bcart.bind.after", initModal);
+        } else {
+            $(document).on("product.bind.after", initModal);
+        }
+        console.log("productPhotoModalCtr controller", controller);
+    };
+}
+
+rivets.components["product-photo-modal"] = {
+    template: function() {
+        return ProductJS.templates.productPhotoModal;
+    },
+    initialize: function(el, data) {
+        if (!data.product) {
+            console.error(new Error("product attribute is required"));
+        }
+        return new ProductJS.Components.productPhotoModalCtr(el, data);
     }
 };
 

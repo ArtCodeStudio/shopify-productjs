@@ -17,6 +17,8 @@ ProductJS.Components.productCtr = function (element, data) {
   controller = ProductJS.Utilities.extend(controller, data)
   controller.$element = $(element);
 
+  controller.shopifyProductReviewsID = 'shopify-product-reviews-'+ product.handle;
+
   console.log("productCtr", controller, data);
 }
 
