@@ -498,6 +498,10 @@ ProductJS.Utilities.parseDatasetJsonStrings = function (dataset) {
       data.product.images = [];
     };
 
+    if(dataset.productPlaceholderImage) {
+      data.product.placeholderImage = dataset.productPlaceholderImage;
+    }
+
     /**
      * Set placeholder image for products if no image is found
      */

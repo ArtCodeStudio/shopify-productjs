@@ -111,8 +111,10 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
         $slick.slick(slickOptions);
         if(controller.hasColorcard) {
           // console.log("remove last image");
-          $slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index, this is the colorcard
-          $slickThums.last().hide(); // hide colorcard thumb
+          if(data.product.images.length > 1) {
+            $slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index, this is the colorcard
+            $slickThums.last().hide(); // hide colorcard thumb
+          }     
         }
 
         if(controller.hasParentModal) {

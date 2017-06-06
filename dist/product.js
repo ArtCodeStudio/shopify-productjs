@@ -315,6 +315,9 @@ ProductJS.Utilities.parseDatasetJsonStrings = function(dataset) {
         if (!ProductJS.Utilities.isArray(data.product.images)) {
             data.product.images = [];
         }
+        if (dataset.productPlaceholderImage) {
+            data.product.placeholderImage = dataset.productPlaceholderImage;
+        }
         if (data.product.images.length <= 0 && dataset.productPlaceholderImage) {
             data.product.images.push(dataset.productPlaceholderImage);
             data.product.featured_image = dataset.productPlaceholderImage;
@@ -1103,8 +1106,10 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
             if (!$slick.hasClass("slick-initialized")) {
                 $slick.slick(slickOptions);
                 if (controller.hasColorcard) {
-                    $slick.slick("slickRemove", controller.product.images.length - 1, false);
-                    $slickThums.last().hide();
+                    if (data.product.images.length > 1) {
+                        $slick.slick("slickRemove", controller.product.images.length - 1, false);
+                        $slickThums.last().hide();
+                    }
                 }
                 if (controller.hasParentModal) {
                     controller.$parentModal.on("shown.bs.modal", function(e) {
