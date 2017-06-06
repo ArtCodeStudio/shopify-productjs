@@ -479,14 +479,33 @@ ProductJS.Utilities.getVariant = function (optionValues, options, variants) {
 ProductJS.Utilities.parseDatasetJsonStrings = function (dataset) {
   var data = {};
   if(dataset.productJsonString) {
+    // data-product-json-string='{{product | json | replace: "'", "&#39;"}}'
     data.product = JSON.parse(dataset.productJsonString);
+
+    // data-product-url="{{collection.url}}{{product.url}}"
     data.product.url = dataset.productUrl;
+
     // metafields needed to be set manually, its not allawed in shopify to get all as json
     data.product.metafields = {
+      // data-product-metafields-custom-fields-json-string='{{product.metafields.c_f | json | replace: "'", "&#39;"}}'
       c_f: JSON.parse(dataset.productMetafieldsCustomFieldsJsonString),
+
+      // data-product-metafields-spr-json-string='{{product.metafields.spr | json | replace: "'", "&#39;"}}'
       spr: JSON.parse(dataset.productMetafieldsSprJsonString),
     }
 
+    if(!ProductJS.Utilities.isArray(data.product.images)) {
+      data.product.images = [];
+    };
+
+    /**
+     * Set placeholder image for products if no image is found
+     */
+    if(data.product.images.length <= 0 && dataset.productPlaceholderImage) {
+      // data-product-placeholder-image='{{ "no-image.png" | asset_url }}'
+      data.product.images.push(dataset.productPlaceholderImage);
+      data.product.featured_image = dataset.productPlaceholderImage;
+    }
   }
   return data;
 }

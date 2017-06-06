@@ -312,6 +312,13 @@ ProductJS.Utilities.parseDatasetJsonStrings = function(dataset) {
             c_f: JSON.parse(dataset.productMetafieldsCustomFieldsJsonString),
             spr: JSON.parse(dataset.productMetafieldsSprJsonString)
         };
+        if (!ProductJS.Utilities.isArray(data.product.images)) {
+            data.product.images = [];
+        }
+        if (data.product.images.length <= 0 && dataset.productPlaceholderImage) {
+            data.product.images.push(dataset.productPlaceholderImage);
+            data.product.featured_image = dataset.productPlaceholderImage;
+        }
     }
     return data;
 };
