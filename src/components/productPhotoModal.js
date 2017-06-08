@@ -77,7 +77,9 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productPhotoModalCtr)) {
           $modal.$slick.slick(options);
 
           if(controller.hasColorcard) {
-            $modal.$slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index, this is the colorcard
+            if(controller.product.images.length > 1) {
+              $modal.$slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index, this is the colorcard
+            }
           }
         }
 
@@ -107,7 +109,7 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productPhotoModalCtr)) {
       $(document).on('product.bind.after', initModal);
     }
 
-    console.log("productPhotoModalCtr controller", controller);
+    // console.log("productPhotoModalCtr controller", controller);
 
   }
 }

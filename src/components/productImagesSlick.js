@@ -53,7 +53,7 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
      * metafield key: jumplink_enable_colorcard
      * value: Enable the Colorcard for this Product; 0: Colorcard is off; 1: Colorcard is on; default: Colorcard is on [p][_i]
      * 
-     * @default: true
+     * @default: on
      */
     controller.hasColorcard = true;
     if(controller.product.metafields.c_f.jumplink_enable_colorcard === '0') {
@@ -70,6 +70,11 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
       controller.hasParentModal = true;
       controller.$parentModal = $(data.parentModalTarget);
       // console.log('productImagesSlickCtr hasParentModal', controller.hasParentModal, data.parentModalTarget, controller.$parentModal);
+    }
+
+    controller.backgroundClass = 'background-box ratio-1-2';
+    if(typeof(data.backgroundClass) === 'string') {
+      controller.backgroundClass = data.backgroundClass;
     }
 
     /**
@@ -114,7 +119,7 @@ if(!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr)) 
           if(data.product.images.length > 1) {
             $slick.slick('slickRemove', controller.product.images.length - 1, false); // remove last index, this is the colorcard
             $slickThums.last().hide(); // hide colorcard thumb
-          }     
+          }
         }
 
         if(controller.hasParentModal) {

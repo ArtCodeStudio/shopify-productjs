@@ -1083,6 +1083,10 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productImagesSlickCtr))
             controller.hasParentModal = true;
             controller.$parentModal = $(data.parentModalTarget);
         }
+        controller.backgroundClass = "background-box ratio-1-2";
+        if (typeof data.backgroundClass === "string") {
+            controller.backgroundClass = data.backgroundClass;
+        }
         controller.showThums = true;
         if (typeof data.showThums !== "undefined") {
             controller.showThums = data.showThums === true || data.showThums === "true";
@@ -1199,7 +1203,9 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productPhotoModalCtr)) 
                     console.log("productPhotoModalCtr init slick", options);
                     $modal.$slick.slick(options);
                     if (controller.hasColorcard) {
-                        $modal.$slick.slick("slickRemove", controller.product.images.length - 1, false);
+                        if (controller.product.images.length > 1) {
+                            $modal.$slick.slick("slickRemove", controller.product.images.length - 1, false);
+                        }
                     }
                 }
                 $modal.$slick.slick("slickGoTo", $syncSlick.slick("slickCurrentSlide"), true);
@@ -1215,7 +1221,6 @@ if (!ProductJS.Utilities.isFunction(ProductJS.Components.productPhotoModalCtr)) 
         } else {
             $(document).on("product.bind.after", initModal);
         }
-        console.log("productPhotoModalCtr controller", controller);
     };
 }
 
