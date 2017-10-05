@@ -81,6 +81,10 @@ ProductJS.Utilities.isFunction = function(obj) {
     return typeof obj === "function";
 };
 
+ProductJS.Utilities.isNumber = function(obj) {
+    return typeof obj === "number";
+};
+
 ProductJS.Utilities.extend = function(target, object1, object2) {
     return $.extend(target, object1, object2);
 };
@@ -733,6 +737,9 @@ rivets.formatters.contains = function(value, attr, search) {
 };
 
 rivets.formatters.justDigits = function(str) {
+    if (ProductJS.Utilities.isNumber(str)) {
+        return str;
+    }
     var num = str.replace(/[^-\d\.]/g, "");
     if (isNaN(num)) {
         return 0;

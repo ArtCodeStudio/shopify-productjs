@@ -127,6 +127,17 @@ ProductJS.Utilities.isFunction = function(obj) {
 };
 
 /**
+ * Check if object is of type number
+ * 
+ * @param obj
+ * @return boolean
+ * @see http://jsperf.com/alternative-isfunction-implementations/4
+ */
+ProductJS.Utilities.isNumber = function(obj) {
+  return typeof(obj) === 'number';
+};
+
+/**
  * Merge the contents of two or more objects together into the first object.
  * 
  * @see https://api.jquery.com/jquery.extend/#jQuery-extend-target-object1-objectN

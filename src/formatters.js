@@ -263,6 +263,9 @@ rivets.formatters.contains = function(value, attr, search) {
  * @see http://stackoverflow.com/a/1100653/1465919
  */
 rivets.formatters.justDigits = function (str) {
+  if(ProductJS.Utilities.isNumber(str)) {
+    return str;
+  }
   var num = str.replace(/[^-\d\.]/g, '');
   if(isNaN(num)) {
     return 0;
